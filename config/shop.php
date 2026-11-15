@@ -10,10 +10,25 @@ return [
 
     'store' => [
         'name' => env('APP_NAME', 'MyShop'),
-        'email' => 'halo@myshop.test',
-        'phone' => '0812-0000-0000',
-        'address' => 'Jl. Contoh No. 1, Bandung, Jawa Barat',
+        'email' => env('SHOP_EMAIL', 'halo@myshop.test'),
+        'phone' => env('SHOP_PHONE', '0812-0000-0000'),
+        'address' => env('SHOP_ADDRESS', 'Jl. Contoh No. 1, Bandung, Jawa Barat'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment
+    |--------------------------------------------------------------------------
+    |
+    | The simulator lets a customer mark their own order paid, so it is off in
+    | production by default. With it off, customers transfer to the bank
+    | account below and an admin confirms the payment on the order page.
+    |
+    */
+
+    'payment_simulator' => (bool) env('SHOP_PAYMENT_SIMULATOR', env('APP_ENV', 'production') !== 'production'),
+
+    'bank_account' => env('SHOP_BANK_ACCOUNT'),
 
     /*
     |--------------------------------------------------------------------------
@@ -22,6 +37,12 @@ return [
     */
 
     'payment_due_hours' => 24,
+
+    // Email the customer this many hours before an unpaid order expires.
+    'payment_reminder_hours' => 2,
+
+    // Delivered orders the customer has not confirmed are completed after this many days.
+    'auto_complete_days' => 3,
 
     'max_quantity_per_item' => 10,
 

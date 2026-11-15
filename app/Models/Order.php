@@ -31,6 +31,7 @@ use Illuminate\Support\Str;
  * @property string $courier_service
  * @property PaymentMethod $payment_method
  * @property Carbon $payment_due_at
+ * @property Carbon|null $payment_reminder_sent_at
  * @property string|null $customer_note
  * @property string|null $internal_note
  * @property string $idempotency_key
@@ -39,7 +40,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'order_number', 'user_id', 'status', 'subtotal', 'discount_total', 'shipping_cost', 'tax_total',
     'grand_total', 'voucher_id', 'voucher_code', 'shipping_address', 'courier', 'courier_service',
-    'payment_method', 'payment_due_at', 'customer_note', 'internal_note', 'idempotency_key',
+    'payment_method', 'payment_due_at', 'payment_reminder_sent_at', 'customer_note', 'internal_note', 'idempotency_key',
 ])]
 class Order extends Model
 {
@@ -56,6 +57,7 @@ class Order extends Model
             'payment_method' => PaymentMethod::class,
             'shipping_address' => 'array',
             'payment_due_at' => 'datetime',
+            'payment_reminder_sent_at' => 'datetime',
         ];
     }
 

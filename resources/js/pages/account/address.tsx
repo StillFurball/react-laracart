@@ -1,6 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
 import AddressController from '@/actions/App/Http/Controllers/Shop/AddressController';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,15 +35,21 @@ export default function Address({
         <>
             <Head title="Alamat pengiriman" />
 
-            <div className="max-w-xl space-y-6 p-4">
-                <Heading
-                    title="Alamat pengiriman"
-                    description="Satu alamat dipakai untuk setiap checkout. Gunakan data contoh, bukan data pribadi asli."
-                />
+            <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
+                <div className="space-y-4">
+                    <h1 className="text-head font-display">
+                        Alamat pengiriman
+                    </h1>
+                    <p className="max-w-[44ch] text-body">
+                        Satu alamat dipakai untuk setiap checkout. Tarif kirim
+                        tidak bergantung pada kota tujuan. Gunakan data contoh,
+                        bukan data pribadi asli.
+                    </p>
+                </div>
 
                 <Form
                     {...AddressController.update.form()}
-                    className="space-y-4"
+                    className="space-y-5 bg-surface p-6 md:p-8"
                 >
                     {({ processing, errors }) => (
                         <>
@@ -86,7 +91,9 @@ export default function Address({
                                 ))}
                             </div>
 
-                            <Button disabled={processing}>Simpan alamat</Button>
+                            <Button size="xl" disabled={processing}>
+                                Simpan alamat
+                            </Button>
                         </>
                     )}
                 </Form>

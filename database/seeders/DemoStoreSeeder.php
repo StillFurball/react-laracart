@@ -42,32 +42,33 @@ class DemoStoreSeeder extends Seeder
             'postal_code' => '40111',
         ]);
 
-        $fashion = $this->category('Fashion');
-        $men = $this->category('Pria', $fashion);
-        $women = $this->category('Wanita', $fashion);
-        $menShirts = $this->category('Kaos Pria', $men);
-        $menJackets = $this->category('Jaket Pria', $men);
-        $dresses = $this->category('Dress', $women);
-        $home = $this->category('Rumah Tangga');
-        $kitchen = $this->category('Dapur', $home);
-        $accessories = $this->category('Aksesoris');
-
-        $sizes = ['S', 'M', 'L', 'XL'];
+        $phones = $this->category('Ponsel & Tablet');
+        $smartphones = $this->category('Smartphone', $phones);
+        $tablets = $this->category('Tablet', $phones);
+        $computers = $this->category('Komputer');
+        $laptops = $this->category('Laptop', $computers);
+        $peripherals = $this->category('Aksesori Komputer', $computers);
+        $inputDevices = $this->category('Keyboard & Mouse', $peripherals);
+        $audio = $this->category('Audio');
+        $headphones = $this->category('Headphone', $audio);
+        $speakers = $this->category('Speaker', $audio);
+        $wearables = $this->category('Jam Pintar');
+        $accessories = $this->category('Aksesori');
 
         $catalog = [
-            [$menShirts, 'Kaos Polos Katun Combed', 200, 79000, ['Ukuran' => $sizes, 'Warna' => ['Hitam', 'Putih']]],
-            [$menShirts, 'Kaos Oversize Grafis', 230, 99000, ['Ukuran' => $sizes]],
-            [$menShirts, 'Polo Shirt Pique', 250, 129000, ['Ukuran' => ['M', 'L', 'XL'], 'Warna' => ['Navy', 'Abu']]],
-            [$menJackets, 'Jaket Denim Klasik', 800, 349000, ['Ukuran' => ['M', 'L', 'XL']]],
-            [$menJackets, 'Hoodie Fleece', 600, 219000, ['Ukuran' => $sizes, 'Warna' => ['Hitam', 'Maroon']]],
-            [$dresses, 'Dress Midi Floral', 350, 259000, ['Ukuran' => ['S', 'M', 'L']]],
-            [$dresses, 'Dress Linen Polos', 320, 239000, ['Ukuran' => ['S', 'M', 'L'], 'Warna' => ['Krem', 'Sage']]],
-            [$kitchen, 'Set Pisau Dapur 5 in 1', 900, 189000, []],
-            [$kitchen, 'Teflon Anti Lengket 24 cm', 1100, 145000, []],
-            [$kitchen, 'Botol Minum Stainless 750 ml', 400, 89000, ['Warna' => ['Hitam', 'Hijau', 'Biru']]],
-            [$accessories, 'Topi Baseball Bordir', 150, 69000, ['Warna' => ['Hitam', 'Krem']]],
-            [$accessories, 'Tote Bag Kanvas', 250, 59000, []],
-            [$accessories, 'Kaus Kaki Sport (3 pasang)', 120, 45000, []],
+            [$smartphones, 'Smartphone Aero 12 5G', 190, 5499000, ['Penyimpanan' => ['128 GB', '256 GB'], 'Warna' => ['Hitam', 'Biru']]],
+            [$smartphones, 'Smartphone Lumen A5', 185, 2299000, ['Warna' => ['Hitam', 'Hijau']]],
+            [$tablets, 'Tablet Nova Pad 11', 480, 4299000, ['Penyimpanan' => ['128 GB', '256 GB']]],
+            [$laptops, 'Laptop Zenit Air 14', 1300, 11999000, ['Penyimpanan' => ['512 GB', '1 TB'], 'Warna' => ['Silver', 'Abu']]],
+            [$laptops, 'Laptop Kerja Orbit 15', 1700, 7499000, []],
+            [$inputDevices, 'Keyboard Mekanikal Tala 75', 800, 899000, ['Warna' => ['Hitam', 'Putih']]],
+            [$inputDevices, 'Mouse Nirkabel Glide', 90, 249000, ['Warna' => ['Hitam', 'Putih', 'Biru']]],
+            [$headphones, 'Headphone Nirkabel Senyap ANC', 250, 1799000, ['Warna' => ['Hitam', 'Silver']]],
+            [$headphones, 'Earbuds TWS Pico', 50, 499000, ['Warna' => ['Putih', 'Hitam']]],
+            [$speakers, 'Speaker Bluetooth Gema Mini', 600, 649000, []],
+            [$wearables, 'Jam Pintar Pulse 2', 60, 1499000, ['Warna' => ['Hitam', 'Silver']]],
+            [$accessories, 'Power Bank 20.000 mAh', 400, 349000, []],
+            [$accessories, 'Charger GaN 65 W', 150, 299000, []],
         ];
 
         foreach ($catalog as $index => [$category, $name, $weight, $price, $options]) {
@@ -86,8 +87,9 @@ class DemoStoreSeeder extends Seeder
                 $variant = $product->variants()->create([
                     'sku' => $skuBase.($attributes === [] ? '' : '-'.Str::upper(implode('-', array_map(fn ($value) => Str::substr(Str::slug($value), 0, 3), $attributes)))),
                     'attributes' => $attributes === [] ? null : $attributes,
-                    'price' => $price + (($attributes['Ukuran'] ?? null) === 'XL' ? 10000 : 0),
-                    'compare_at_price' => $index % 3 === 0 ? $price + 30000 : null,
+                    // Each storage tier above the first costs a million more.
+                    'price' => $price + (int) array_search($attributes['Penyimpanan'] ?? null, $options['Penyimpanan'] ?? [], true) * 1000000,
+                    'compare_at_price' => $index % 3 === 0 ? (int) round($price * 1.1, -3) : null,
                     'weight_gram' => $weight,
                     'low_stock_threshold' => (int) config('shop.low_stock_threshold'),
                 ]);
@@ -107,12 +109,12 @@ class DemoStoreSeeder extends Seeder
 
         Product::create([
             'category_id' => $accessories->id,
-            'name' => 'Dompet Kulit (Draft)',
-            'slug' => 'dompet-kulit-draft',
+            'name' => 'Kamera Aksi (Draft)',
+            'slug' => 'kamera-aksi-draft',
             'description' => 'Produk draft: tidak tampil di toko.',
             'status' => ProductStatus::Draft,
             'weight_gram' => 200,
-        ])->variants()->create(['sku' => 'MS-DRAFT', 'price' => 150000, 'weight_gram' => 200]);
+        ])->variants()->create(['sku' => 'MS-DRAFT', 'price' => 1500000, 'weight_gram' => 200]);
 
         Voucher::create([
             'code' => 'HEMAT10',

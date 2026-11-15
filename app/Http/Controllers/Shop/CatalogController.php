@@ -92,6 +92,7 @@ class CatalogController extends Controller
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'description' => $product->description,
+                'weight_gram' => $product->weight_gram,
                 'category' => $product->category->only(['name', 'slug']),
                 'images' => $product->images->map->only(['id', 'url']),
                 'variants' => $product->variants->map(fn (ProductVariant $variant): array => [
@@ -112,11 +113,11 @@ class CatalogController extends Controller
     /**
      * @return Builder<Product>
      */
-    private static function cardQuery(): Builder
+    public static function cardQuery(): Builder
     {
         return Product::active()
             ->whereHas('variants')
-            ->with(['images', 'category'])
+            ->with(['images', 'category', 'variants:id,product_id,attributes'])
             ->withMin('variants as min_price', 'price')
             ->withSum('variants as total_stock', 'stock')
             ->withExists(['variants as has_low_stock' => fn (Builder $query) => $query
@@ -125,9 +126,9 @@ class CatalogController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, slug: string, category: string, image: string|null, min_price: int, total_stock: int, has_low_stock: bool}
+     * @return array{id: int, name: string, slug: string, category: string, image: string|null, min_price: int, total_stock: int, has_low_stock: bool, weight_gram: int, colors: list<string>}
      */
-    private static function card(Product $product): array
+    public static function card(Product $product): array
     {
         return [
             'id' => $product->id,
@@ -138,6 +139,8 @@ class CatalogController extends Controller
             'min_price' => (int) $product->min_price,
             'total_stock' => (int) $product->total_stock,
             'has_low_stock' => (bool) $product->has_low_stock,
+            'weight_gram' => $product->weight_gram,
+            'colors' => $product->variants->pluck('attributes.Warna')->filter()->unique()->values()->all(),
         ];
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\StockMovementType;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -125,6 +126,8 @@ class PlaceOrder
                 ]);
 
                 $cart->items()->delete();
+
+                DB::afterCommit(fn () => $user->notify(new OrderStatusUpdated($order)));
 
                 return $order;
             });

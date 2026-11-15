@@ -5,11 +5,13 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CartItemController;
 use App\Http\Controllers\Shop\CatalogController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\LandingController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\OrderPaymentController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [CatalogController::class, 'index'])->name('home');
+Route::get('/', LandingController::class)->name('home');
+Route::get('products', [CatalogController::class, 'index'])->name('products.index');
 Route::get('products/{product:slug}', [CatalogController::class, 'show'])->name('products.show');
 
 Route::middleware('auth')->group(function () {
@@ -24,11 +26,11 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('checkout', [CheckoutController::class, 'show'])->name('checkout.show');
-    Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
 
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('orders/{order}/complete', [OrderController::class, 'complete'])->name('orders.complete');
-    Route::post('orders/{order}/payment', [OrderPaymentController::class, 'store'])->name('orders.payment.store');
+    Route::post('orders/{order}/payment', [OrderPaymentController::class, 'store'])->middleware('throttle:10,1')->name('orders.payment.store');
 });

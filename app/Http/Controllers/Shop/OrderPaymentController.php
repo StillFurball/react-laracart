@@ -18,6 +18,8 @@ class OrderPaymentController extends Controller
      */
     public function store(Request $request, Order $order, SimulatePayment $simulatePayment): RedirectResponse
     {
+        abort_unless(config('shop.payment_simulator'), 404);
+
         Gate::authorize('view', $order);
 
         $validated = $request->validate([

@@ -7,11 +7,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
+@theme inline {
+    /* System type: no font request, and it reads as native on every device. */
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI',
+        system-ui, Roboto, 'Helvetica Neue', sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Noto Color Emoji';
+
+    /* Five type steps for the storefront; nothing else is sized. */
+    --text-small: 0.875rem;
+    --text-small--line-height: 1.45;
+    --text-body: 1.0625rem;
+    --text-body--line-height: 1.5;
+    --text-lead: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+    --text-lead--line-height: 1.3;
+    --text-head: clamp(1.75rem, 1.3rem + 2vw, 3rem);
+    --text-head--line-height: 1.1;
+    --text-display: clamp(2.5rem, 1.5rem + 5vw, 5rem);
+    --text-display--line-height: 1.05;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -42,6 +55,15 @@
     --color-destructive-foreground: var(--destructive-foreground);
 
     --color-border: var(--border);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-field: var(--field);
+    --color-surface: var(--surface);
+    --color-deep: var(--deep);
+    --color-soft: var(--soft);
+    --color-paper: var(--paper);
+    --color-brand: var(--brand);
+    --color-highlight: var(--highlight);
     --color-input: var(--input);
     --color-ring: var(--ring);
 
@@ -61,75 +83,90 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/*
+ * Brand: Electric Blue + Tangerine. 65% --background, 25% --surface, 8% blue (primary actions and
+ * links), 2% tangerine (discounts, promos, important info).
+ * Tangerine #f97316 is only 2.8:1 on the ground, so text uses the darker --warning (5:1) and the
+ * pure tone is kept for fills (--highlight). White on --primary 5.2:1; --soft 6.9:1 on --surface.
+ */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --field: #eaf0f7;
+    --surface: #eaf0f7;
+    --deep: #dce5f0;
+    --soft: #475569;
+    --paper: #ffffff;
+    --brand: #2563eb;
+    --highlight: #f97316;
+
+    --background: #f8fafc;
+    --foreground: #1d1d1f;
+    --card: #ffffff;
+    --card-foreground: #1d1d1f;
+    --popover: #ffffff;
+    --popover-foreground: #1d1d1f;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #eaf0f7;
+    --secondary-foreground: #1d1d1f;
+    --muted: #eaf0f7;
+    --muted-foreground: var(--soft);
+    --accent: #dce5f0;
+    --accent-foreground: #1d1d1f;
+    --destructive: #b42318;
+    --destructive-foreground: #b42318;
+    --success: #1f7a4d;
+    --warning: #c2410c;
+    --border: #dbe3ec;
+    --input: #8794a6;
+    --ring: var(--brand);
+    --chart-1: #1d1d1f;
+    --chart-2: #2563eb;
+    --chart-3: #8e8e93;
+    --chart-4: #c7c7cc;
+    --chart-5: #5aa9e6;
+    --radius: 0.75rem;
+    --sidebar: var(--field);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --field: #161617;
+    --surface: #1c1c1e;
+    --deep: #2c2c2e;
+    --soft: #a1a1a6;
+    --paper: #f5f5f7;
+    --brand: #60a5fa;
+
+    --background: #0b0b0c;
+    --foreground: #f5f5f7;
+    --card: #161617;
+    --card-foreground: #f5f5f7;
+    --popover: #1c1c1e;
+    --popover-foreground: #f5f5f7;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #1c1c1e;
+    --secondary-foreground: #f5f5f7;
+    --muted: #1c1c1e;
+    --accent: #2c2c2e;
+    --accent-foreground: #f5f5f7;
+    --destructive: #ff8a80;
+    --destructive-foreground: #ff8a80;
+    --success: #6fd3a2;
+    --warning: #f97316;
+    --border: #2c2c2e;
+    --input: #636366;
+    --chart-1: #f5f5f7;
+    --chart-2: #2997ff;
+    --chart-3: #8e8e93;
+    --chart-4: #48484a;
+    --chart-5: #5aa9e6;
 }
 
 @layer base {
@@ -139,5 +176,47 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer base {
+    html {
+        font-optical-sizing: auto;
+    }
+
+    ::selection {
+        background: var(--brand);
+        color: #ffffff;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+
+    /* In the base layer so any rounded-* utility still wins. */
+    .theme-shop :where(a, button, input, select, textarea, img, .bg-primary) {
+        border-radius: var(--radius-md);
+    }
+
+    .theme-shop .bg-surface {
+        border-radius: 1.25rem;
+    }
+}
+
+@utility font-display {
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.1;
+}
+
+/* The only translucent surface: the sticky bar that floats over content. */
+@utility bar-glass {
+    background-color: color-mix(in srgb, var(--background) 80%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+
+    @media (prefers-reduced-transparency: reduce) {
+        background-color: var(--background);
+        backdrop-filter: none;
     }
 }

@@ -1,16 +1,19 @@
 import { Link } from '@inertiajs/react';
-import { ImageOff } from 'lucide-react';
-import { formatRupiah } from '@/lib/utils';
+import ProductArt from '@/components/product-art';
+import { cn, formatRupiah } from '@/lib/utils';
 import { show } from '@/routes/products';
 import type { ProductCard as ProductCardData } from '@/types';
 
+/** The product's photograph, or its device glyph when it has none yet. */
 export function ProductImage({
     src,
     alt,
+    color,
     className = 'aspect-square',
 }: {
     src: string | null;
     alt: string;
+    color?: string | null;
     className?: string;
 }) {
     return src ? (
@@ -18,47 +21,67 @@ export function ProductImage({
             src={src}
             alt={alt}
             loading="lazy"
-            className={`${className} w-full rounded-md object-cover`}
+            className={cn(
+                'w-full rounded-2xl bg-surface object-cover',
+                className,
+            )}
         />
     ) : (
-        <div
-            className={`${className} flex w-full items-center justify-center rounded-md bg-muted text-muted-foreground`}
-            aria-hidden
-        >
-            <ImageOff className="size-8" />
-        </div>
+        <ProductArt
+            name={alt}
+            color={color}
+            className={cn('w-full', className)}
+        />
     );
+}
+
+export function formatWeight(grams: number): string {
+    return grams >= 1000
+        ? `${(grams / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg`
+        : `${grams} g`;
 }
 
 export default function ProductCard({ product }: { product: ProductCardData }) {
     const soldOut = product.total_stock === 0;
+    const colors = product.colors.length;
 
     return (
         <Link
             href={show(product.slug)}
             prefetch
-            className="group flex flex-col gap-2 rounded-lg border p-3 transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="group flex flex-col gap-3"
         >
-            <div className="relative">
-                <ProductImage src={product.image} alt={product.name} />
-                {soldOut && (
-                    <span className="absolute top-2 left-2 rounded bg-neutral-900/80 px-2 py-0.5 text-xs font-medium text-white">
-                        Habis
-                    </span>
+            <ProductImage
+                src={product.image}
+                alt={product.name}
+                className={cn(
+                    'aspect-square transition-opacity group-hover:opacity-80',
+                    soldOut && 'opacity-50',
                 )}
-                {!soldOut && product.has_low_stock && (
-                    <span className="absolute top-2 left-2 rounded bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">
-                        Sisa sedikit
+            />
+            <div className="flex flex-1 flex-col gap-0.5 px-1">
+                <p className="text-small text-soft">
+                    {product.category}
+                    {colors > 1 && ` · ${colors} warna`}
+                </p>
+                <h3 className="text-body font-semibold group-hover:underline">
+                    {product.name}
+                </h3>
+                <p className="flex flex-wrap items-baseline gap-x-2 text-body">
+                    <span className="tabular-nums">
+                        {formatRupiah(product.min_price)}
                     </span>
-                )}
+                    {soldOut ? (
+                        <span className="text-small text-soft">Habis</span>
+                    ) : (
+                        product.has_low_stock && (
+                            <span className="text-small font-medium text-warning">
+                                Sisa sedikit
+                            </span>
+                        )
+                    )}
+                </p>
             </div>
-            <p className="text-xs text-muted-foreground">{product.category}</p>
-            <p className="line-clamp-2 text-sm font-medium group-hover:underline">
-                {product.name}
-            </p>
-            <p className="mt-auto font-semibold">
-                {formatRupiah(product.min_price)}
-            </p>
         </Link>
     );
 }

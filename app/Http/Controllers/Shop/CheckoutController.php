@@ -53,7 +53,7 @@ class CheckoutController extends Controller
                 'cost' => SummarizeCart::shippingCost($key, $summary['weight_gram']),
             ])->values(),
             'courier' => config('shop.shipping.courier'),
-            'paymentMethods' => collect(PaymentMethod::cases())->map(fn (PaymentMethod $method): array => [
+            'paymentMethods' => collect(PaymentMethod::available())->map(fn (PaymentMethod $method): array => [
                 'value' => $method->value,
                 'label' => $method->label(),
             ]),

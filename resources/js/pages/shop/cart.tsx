@@ -1,13 +1,12 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Info, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import CartItemController from '@/actions/App/Http/Controllers/Shop/CartItemController';
 import InputError from '@/components/input-error';
 import { ProductImage } from '@/components/product-card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { formatRupiah } from '@/lib/utils';
-import { home } from '@/routes';
+import { index as productsIndex } from '@/routes/products';
 import { show as checkoutShow } from '@/routes/checkout';
 import { show as productShow } from '@/routes/products';
 import type { CartLine } from '@/types';
@@ -38,50 +37,50 @@ export default function Cart({
     return (
         <>
             <Head title="Keranjang" />
-            <h1 className="mb-4 text-2xl font-semibold">Keranjang</h1>
+            <h1 className="mb-10 text-head font-display">Keranjang</h1>
 
             {priceChanges.length > 0 && (
-                <Alert className="mb-4">
-                    <Info />
-                    <AlertTitle>Harga berubah</AlertTitle>
-                    <AlertDescription>
-                        <ul className="list-disc pl-4">
-                            {priceChanges.map((message) => (
-                                <li key={message}>{message}</li>
-                            ))}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
+                <div role="status" className="mb-4 bg-surface p-5">
+                    <h2 className="text-body font-semibold">Harga berubah</h2>
+                    <ul className="mt-1 list-disc pl-5 text-body">
+                        {priceChanges.map((message) => (
+                            <li key={message}>{message}</li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             {issues.length > 0 && (
-                <Alert variant="destructive" className="mb-4">
-                    <AlertTriangle />
-                    <AlertTitle>Perbaiki keranjang sebelum checkout</AlertTitle>
-                    <AlertDescription>
-                        <ul className="list-disc pl-4">
-                            {issues.map((issue) => (
-                                <li key={issue}>{issue}</li>
-                            ))}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
+                <div role="alert" className="mb-4 rounded-2xl bg-accent p-5">
+                    <h2 className="text-body font-semibold">
+                        Perbaiki keranjang sebelum checkout
+                    </h2>
+                    <ul className="mt-1 list-disc pl-5 text-body">
+                        {issues.map((issue) => (
+                            <li key={issue}>{issue}</li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             <InputError className="mb-4" message={errors.quantity} />
 
             {items.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-10 text-center">
-                    <p className="mb-4 text-muted-foreground">
-                        Keranjang masih kosong.
+                <div className="bg-surface px-6 py-16">
+                    <h2 className="text-lead font-semibold">
+                        Keranjang masih kosong
+                    </h2>
+                    <p className="mt-2 mb-6 max-w-[48ch] text-body">
+                        Pilih barang di katalog. Ongkirnya nanti dihitung dari
+                        total berat, per kilo.
                     </p>
                     <Button asChild>
-                        <Link href={home()}>Mulai belanja</Link>
+                        <Link href={productsIndex()}>Mulai belanja</Link>
                     </Button>
                 </div>
             ) : (
-                <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-                    <ul className="divide-y rounded-lg border">
+                <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+                    <ul className="divide-y divide-border border-y border-border">
                         {items.map((item) => {
                             const max = Math.max(
                                 Math.min(item.stock, maxPerItem),
@@ -89,8 +88,8 @@ export default function Cart({
                             );
 
                             return (
-                                <li key={item.id} className="flex gap-3 p-3">
-                                    <div className="w-20 shrink-0">
+                                <li key={item.id} className="flex gap-4 py-5">
+                                    <div className="w-20 shrink-0 md:w-28">
                                         <ProductImage
                                             src={item.image}
                                             alt={item.product_name}
@@ -101,25 +100,25 @@ export default function Cart({
                                             href={productShow(
                                                 item.product_slug,
                                             )}
-                                            className="font-medium hover:underline"
+                                            className="text-body font-semibold hover:underline"
                                         >
                                             {item.product_name}
                                         </Link>
-                                        <p className="text-xs text-muted-foreground">
+                                        <p className="text-small text-soft">
                                             {item.variant_label ?? 'Standar'} ·{' '}
                                             {item.sku}
                                         </p>
-                                        <p className="text-sm">
+                                        <p className="text-body tabular-nums">
                                             {formatRupiah(item.price)}
                                         </p>
                                         {item.issue && (
-                                            <p className="text-sm font-medium text-red-600">
+                                            <p className="text-body font-semibold text-warning">
                                                 {item.issue}
                                             </p>
                                         )}
                                     </div>
                                     <div className="flex flex-col items-end justify-between gap-2">
-                                        <p className="font-semibold">
+                                        <p className="text-body font-semibold tabular-nums">
                                             {formatRupiah(item.line_total)}
                                         </p>
                                         <div className="flex items-center gap-1">
@@ -183,17 +182,19 @@ export default function Cart({
                         })}
                     </ul>
 
-                    <aside className="h-fit space-y-3 rounded-lg border p-4">
-                        <div className="flex justify-between">
+                    <aside className="h-fit space-y-4 bg-surface p-6 lg:sticky lg:top-24">
+                        <div className="flex items-baseline justify-between text-body">
                             <span>Subtotal</span>
-                            <span className="font-semibold">
+                            <span className="text-lead font-semibold tabular-nums">
                                 {formatRupiah(subtotal)}
                             </span>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            Ongkir dan voucher dihitung saat checkout.
+                        <p className="text-small text-soft">
+                            Ongkir (per kilo, dibulatkan ke atas) dan voucher
+                            dihitung saat checkout.
                         </p>
                         <Button
+                            size="xl"
                             className="w-full"
                             disabled={issues.length > 0}
                             asChild={issues.length === 0}

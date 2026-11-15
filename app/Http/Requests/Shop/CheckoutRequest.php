@@ -19,7 +19,7 @@ class CheckoutRequest extends FormRequest
     {
         return [
             'shipping_service' => ['required', 'string', Rule::in(array_keys(SummarizeCart::shippingServices()))],
-            'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
+            'payment_method' => ['required', Rule::enum(PaymentMethod::class)->only(PaymentMethod::available())],
             'voucher_code' => ['nullable', 'string', 'max:50'],
             'customer_note' => ['nullable', 'string', 'max:500'],
             'terms' => ['accepted'],

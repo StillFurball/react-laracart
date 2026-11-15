@@ -19,7 +19,7 @@ export default function Pagination({ links }: { links: PaginationLink[] }) {
     return (
         <nav
             aria-label="Halaman"
-            className="mt-6 flex flex-wrap items-center justify-center gap-1"
+            className="mt-10 flex flex-wrap items-center justify-center gap-1"
         >
             {links.map((link, index) =>
                 link.url ? (
@@ -29,10 +29,10 @@ export default function Pagination({ links }: { links: PaginationLink[] }) {
                         preserveScroll
                         aria-current={link.active ? 'page' : undefined}
                         className={cn(
-                            'min-w-9 rounded-md border px-3 py-1.5 text-center text-sm',
+                            'min-w-10 px-3 py-2 text-center text-sm font-medium transition-colors',
                             link.active
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'hover:bg-accent',
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary hover:bg-accent',
                         )}
                     >
                         {cleanLabel(link.label)}

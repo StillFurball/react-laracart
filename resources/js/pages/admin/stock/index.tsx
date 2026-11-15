@@ -87,8 +87,8 @@ export default function AdminStockIndex({
                                         <span
                                             className={
                                                 variant.stock === 0
-                                                    ? 'font-semibold text-red-600'
-                                                    : 'font-semibold text-amber-600'
+                                                    ? 'font-semibold text-destructive'
+                                                    : 'font-semibold text-warning'
                                             }
                                         >
                                             {variant.stock} /{' '}
@@ -156,7 +156,7 @@ export default function AdminStockIndex({
                                             {typeLabels[movement.type]}
                                         </td>
                                         <td
-                                            className={`p-3 text-right font-medium ${movement.quantity < 0 ? 'text-red-600' : 'text-emerald-600'}`}
+                                            className={`p-3 text-right font-medium ${movement.quantity < 0 ? 'text-destructive' : 'text-success'}`}
                                         >
                                             {movement.quantity > 0
                                                 ? `+${movement.quantity}`

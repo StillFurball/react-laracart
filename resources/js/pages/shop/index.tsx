@@ -1,13 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState } from 'react';
+import CategoryTree from '@/components/category-tree';
 import Pagination from '@/components/pagination';
 import ProductCard from '@/components/product-card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { cn } from '@/lib/utils';
-import { home } from '@/routes';
+import { index as productsIndex } from '@/routes/products';
 import type {
     CategoryNode,
     Paginated,
@@ -23,44 +23,14 @@ const sortOptions = [
     { value: 'price_desc', label: 'Harga tertinggi' },
 ];
 
-function CategoryLinks({
-    nodes,
-    active,
-    onSelect,
+function flatten(
+    nodes: CategoryNode[],
     depth = 0,
-}: {
-    nodes: CategoryNode[];
-    active: string;
-    onSelect: (slug: string) => void;
-    depth?: number;
-}) {
-    return (
-        <ul className={cn('space-y-0.5', depth > 0 && 'ml-3 border-l pl-2')}>
-            {nodes.map((node) => (
-                <li key={node.id}>
-                    <button
-                        type="button"
-                        onClick={() => onSelect(node.slug)}
-                        aria-current={active === node.slug ? 'true' : undefined}
-                        className={cn(
-                            'w-full rounded px-2 py-1 text-left text-sm hover:bg-accent',
-                            active === node.slug && 'bg-accent font-medium',
-                        )}
-                    >
-                        {node.name}
-                    </button>
-                    {node.children && node.children.length > 0 && (
-                        <CategoryLinks
-                            nodes={node.children}
-                            active={active}
-                            onSelect={onSelect}
-                            depth={depth + 1}
-                        />
-                    )}
-                </li>
-            ))}
-        </ul>
-    );
+): { node: CategoryNode; depth: number }[] {
+    return nodes.flatMap((node) => [
+        { node, depth },
+        ...flatten(node.children ?? [], depth + 1),
+    ]);
 }
 
 export default function Catalog({
@@ -75,12 +45,13 @@ export default function Catalog({
     activeCategory: { name: string; slug: string } | null;
 }) {
     const [search, setSearch] = useState(filters.q);
+    const tree = flatten(categories);
 
     const apply = (changes: Partial<Filters>) => {
         const next = { ...filters, ...changes };
 
         router.get(
-            home({
+            productsIndex({
                 query: {
                     q: next.q || undefined,
                     category: next.category || undefined,
@@ -92,103 +63,134 @@ export default function Catalog({
         );
     };
 
+    const title = filters.q
+        ? `“${filters.q}”`
+        : (activeCategory?.name ?? 'Semua barang');
+
     return (
         <>
-            <Head title="Katalog" />
+            <Head title={activeCategory?.name ?? 'Semua barang'} />
 
-            <div className="flex flex-col gap-6 md:flex-row">
-                <aside className="md:w-56 md:shrink-0">
-                    <h2 className="mb-2 text-sm font-semibold">Kategori</h2>
+            <div className="grid gap-x-10 gap-y-8 md:grid-cols-[14rem_1fr]">
+                <div className="space-y-3 md:col-span-2">
+                    <h1 className="text-head font-display break-words">
+                        {title}
+                    </h1>
+                    <p className="text-body">
+                        {products.total} barang
+                        {activeCategory && filters.q
+                            ? ` di ${activeCategory.name}`
+                            : ''}
+                        . Harga per barang; ongkir dihitung dari total berat
+                        saat checkout.
+                    </p>
+                </div>
+
+                <aside
+                    aria-labelledby="category-title"
+                    className="hidden md:block"
+                >
+                    <h2
+                        id="category-title"
+                        className="mb-3 text-body font-semibold"
+                    >
+                        Kategori
+                    </h2>
                     <button
                         type="button"
                         onClick={() => apply({ category: '' })}
+                        aria-current={!filters.category ? 'true' : undefined}
                         className={cn(
-                            'mb-1 w-full rounded px-2 py-1 text-left text-sm hover:bg-accent',
-                            !filters.category && 'bg-accent font-medium',
+                            'w-full px-3 py-1.5 text-left text-body transition-colors hover:bg-accent',
+                            !filters.category &&
+                                'bg-primary text-primary-foreground hover:bg-primary',
                         )}
                     >
-                        Semua produk
+                        Semua barang
                     </button>
-                    <CategoryLinks
-                        nodes={categories}
-                        active={filters.category}
-                        onSelect={(slug) => apply({ category: slug })}
+                    <CategoryTree
+                        categories={categories}
+                        activeSlug={filters.category}
+                        onSelect={(category) => apply({ category })}
                     />
                 </aside>
 
-                <section className="flex-1">
-                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <section
+                    aria-label="Daftar barang"
+                    className="min-w-0 space-y-6"
+                >
+                    <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
                         <form
-                            className="relative flex-1"
+                            className="relative"
                             role="search"
                             onSubmit={(event) => {
                                 event.preventDefault();
                                 apply({ q: search.trim() });
                             }}
                         >
-                            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-soft" />
                             <Input
                                 type="search"
-                                aria-label="Cari produk atau SKU"
-                                placeholder="Cari produk atau SKU…"
+                                aria-label="Cari barang atau SKU"
+                                placeholder="Cari barang atau SKU"
                                 value={search}
                                 onChange={(event) =>
                                     setSearch(event.target.value)
                                 }
-                                className="pl-9"
+                                className="h-12 pl-10 text-body"
                             />
                         </form>
-                        <div className="flex items-center gap-2">
-                            <label
-                                htmlFor="sort"
-                                className="text-sm whitespace-nowrap text-muted-foreground"
-                            >
-                                Urutkan
-                            </label>
-                            <NativeSelect
-                                id="sort"
-                                value={filters.sort}
-                                onChange={(event) =>
-                                    apply({ sort: event.target.value })
-                                }
-                                className="w-44"
-                            >
-                                {sortOptions.map((option) => (
-                                    <option
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </NativeSelect>
-                        </div>
+                        <NativeSelect
+                            aria-label="Kategori"
+                            value={filters.category}
+                            onChange={(event) =>
+                                apply({ category: event.target.value })
+                            }
+                            className="h-12 md:hidden"
+                        >
+                            <option value="">Semua kategori</option>
+                            {tree.map(({ node, depth }) => (
+                                <option key={node.id} value={node.slug}>
+                                    {'  '.repeat(depth)}
+                                    {node.name}
+                                </option>
+                            ))}
+                        </NativeSelect>
+                        <NativeSelect
+                            aria-label="Urutkan"
+                            value={filters.sort}
+                            onChange={(event) =>
+                                apply({ sort: event.target.value })
+                            }
+                            className="h-12 sm:w-48"
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </NativeSelect>
                     </div>
 
-                    {(filters.q || activeCategory) && (
-                        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                            <span>{products.total} produk</span>
-                            {activeCategory && (
-                                <span>· {activeCategory.name}</span>
-                            )}
-                            {filters.q && <span>· “{filters.q}”</span>}
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link
-                                    href={home()}
-                                    onClick={() => setSearch('')}
-                                >
-                                    <X /> Reset
-                                </Link>
-                            </Button>
-                        </div>
-                    )}
-
                     {products.data.length === 0 ? (
-                        <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
-                            Tidak ada produk yang cocok.
+                        <div className="bg-surface px-6 py-16">
+                            <h2 className="text-lead font-semibold">
+                                Belum ada barang yang cocok
+                            </h2>
+                            <p className="mt-2 max-w-[48ch] text-body">
+                                Coba kata lain, atau cari dengan SKU varian.
+                                Semua barang juga bisa dilihat sekaligus.
+                            </p>
+                            <Link
+                                href={productsIndex()}
+                                onClick={() => setSearch('')}
+                                className="mt-6 inline-flex h-11 items-center bg-primary px-5 font-medium text-primary-foreground"
+                            >
+                                Lihat semua barang
+                            </Link>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-3">
                             {products.data.map((product) => (
                                 <ProductCard
                                     key={product.id}

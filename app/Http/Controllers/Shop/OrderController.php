@@ -48,6 +48,8 @@ class OrderController extends Controller
 
         return Inertia::render('account/orders/show', [
             'order' => self::detail($order),
+            'paymentSimulator' => config('shop.payment_simulator'),
+            'bankAccount' => config('shop.bank_account'),
         ]);
     }
 

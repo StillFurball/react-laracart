@@ -208,7 +208,7 @@ function VariantRow({ variant }: { variant: Variant }) {
                 <p
                     className={
                         variant.stock <= variant.low_stock_threshold
-                            ? 'font-semibold text-amber-600'
+                            ? 'font-semibold text-warning'
                             : 'font-semibold'
                     }
                 >

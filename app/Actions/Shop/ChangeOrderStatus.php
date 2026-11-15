@@ -4,13 +4,17 @@ namespace App\Actions\Shop;
 
 use App\Enums\OrderStatus;
 use App\Enums\StockMovementType;
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
+use App\Notifications\NewPaidOrder;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Applies a status transition with its side effects: history, shipment data and stock release.
+ * Applies a status transition with its side effects: history, shipment data, stock release and emails.
  */
 class ChangeOrderStatus
 {
@@ -67,6 +71,14 @@ class ChangeOrderStatus
                 'user_id' => $actor?->id,
                 'note' => $note,
             ]);
+
+            if (in_array($to, OrderStatusUpdated::STATUSES, true)) {
+                DB::afterCommit(fn () => $order->user->notify(new OrderStatusUpdated($order)));
+            }
+
+            if ($to === OrderStatus::Paid) {
+                DB::afterCommit(fn () => Notification::send(User::where('role', UserRole::Admin)->get(), new NewPaidOrder($order)));
+            }
 
             return $order;
         });

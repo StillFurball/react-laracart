@@ -3,10 +3,14 @@ import { Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import CartItemController from '@/actions/App/Http/Controllers/Shop/CartItemController';
 import InputError from '@/components/input-error';
-import ProductCard, { ProductImage } from '@/components/product-card';
+import { colorFromLabel } from '@/components/product-art';
+import ProductCard, {
+    formatWeight,
+    ProductImage,
+} from '@/components/product-card';
 import { Button } from '@/components/ui/button';
 import { cn, formatRupiah } from '@/lib/utils';
-import { home } from '@/routes';
+import { index as productsIndex } from '@/routes/products';
 import type { ProductCard as ProductCardData } from '@/types';
 
 type Variant = {
@@ -24,6 +28,7 @@ type Product = {
     name: string;
     slug: string;
     description: string | null;
+    weight_gram: number;
     category: { name: string; slug: string };
     images: { id: number; url: string }[];
     variants: Variant[];
@@ -53,29 +58,24 @@ export default function ProductShow({
 
     return (
         <>
-            <Head title={product.name} />
+            <Head title={product.name}>
+                <meta
+                    name="description"
+                    head-key="description"
+                    content={
+                        product.description ??
+                        `${product.name}, ${formatRupiah(variant.price)}.`
+                    }
+                />
+            </Head>
 
-            <nav
-                aria-label="Breadcrumb"
-                className="mb-4 text-sm text-muted-foreground"
-            >
-                <Link href={home()} className="hover:underline">
-                    Katalog
-                </Link>
-                {' / '}
-                <Link
-                    href={home({ query: { category: product.category.slug } })}
-                    className="hover:underline"
-                >
-                    {product.category.name}
-                </Link>
-            </nav>
-
-            <div className="grid gap-8 md:grid-cols-2">
-                <div className="space-y-3">
+            <div className="grid gap-10 md:grid-cols-[1.15fr_1fr] lg:gap-16">
+                <div className="space-y-3 md:sticky md:top-24 md:self-start">
                     <ProductImage
                         src={product.images[imageIndex]?.url ?? null}
                         alt={product.name}
+                        color={colorFromLabel(variant.label)}
+                        className="aspect-square rounded-3xl"
                     />
                     {product.images.length > 1 && (
                         <div className="flex gap-2 overflow-x-auto">
@@ -85,11 +85,12 @@ export default function ProductShow({
                                     type="button"
                                     onClick={() => setImageIndex(index)}
                                     aria-label={`Gambar ${index + 1}`}
+                                    aria-pressed={index === imageIndex}
                                     className={cn(
-                                        'size-16 shrink-0 overflow-hidden rounded-md border-2',
+                                        'size-20 shrink-0 overflow-hidden',
                                         index === imageIndex
-                                            ? 'border-primary'
-                                            : 'border-transparent',
+                                            ? 'outline-3 outline-foreground'
+                                            : 'opacity-70 hover:opacity-100',
                                     )}
                                 >
                                     <img
@@ -103,31 +104,51 @@ export default function ProductShow({
                     )}
                 </div>
 
-                <div className="space-y-5">
-                    <div>
-                        <h1 className="text-2xl font-semibold">
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <nav
+                            aria-label="Breadcrumb"
+                            className="text-small text-soft"
+                        >
+                            <Link
+                                href={productsIndex()}
+                                className="hover:underline"
+                            >
+                                Semua barang
+                            </Link>
+                            {' / '}
+                            <Link
+                                href={productsIndex({
+                                    query: { category: product.category.slug },
+                                })}
+                                className="hover:underline"
+                            >
+                                {product.category.name}
+                            </Link>
+                        </nav>
+                        <h1 className="text-head font-display">
                             {product.name}
                         </h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            SKU {variant.sku}
+                        <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                            <span className="text-lead font-semibold tabular-nums">
+                                {formatRupiah(variant.price)}
+                            </span>
+                            {variant.compare_at_price && (
+                                <span className="text-body text-soft line-through">
+                                    {formatRupiah(variant.compare_at_price)}
+                                </span>
+                            )}
+                            <span className="text-body text-soft">
+                                {formatWeight(product.weight_gram)} · SKU{' '}
+                                {variant.sku}
+                            </span>
                         </p>
                     </div>
 
-                    <div className="flex items-baseline gap-3">
-                        <span className="text-2xl font-bold">
-                            {formatRupiah(variant.price)}
-                        </span>
-                        {variant.compare_at_price && (
-                            <span className="text-muted-foreground line-through">
-                                {formatRupiah(variant.compare_at_price)}
-                            </span>
-                        )}
-                    </div>
-
                     {hasOptions && (
-                        <fieldset>
-                            <legend className="mb-2 text-sm font-medium">
-                                Pilih varian
+                        <fieldset className="space-y-3">
+                            <legend className="text-body font-semibold">
+                                Varian
                             </legend>
                             <div className="flex flex-wrap gap-2">
                                 {product.variants.map((item) => (
@@ -140,33 +161,40 @@ export default function ProductShow({
                                         }}
                                         aria-pressed={item.id === variantId}
                                         className={cn(
-                                            'rounded-md border px-3 py-1.5 text-sm',
+                                            'h-11 min-w-14 px-4 text-body transition-colors',
                                             item.id === variantId
-                                                ? 'border-primary bg-primary text-primary-foreground'
-                                                : 'hover:bg-accent',
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-surface hover:bg-accent',
                                             item.stock === 0 &&
-                                                'line-through opacity-50',
+                                                'text-soft line-through',
                                         )}
                                     >
                                         {item.label ?? 'Standar'}
+                                        {item.stock === 0 && (
+                                            <span className="sr-only">
+                                                {' '}
+                                                (habis)
+                                            </span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
                     )}
 
-                    <p className="text-sm">
+                    <p className="text-body" aria-live="polite">
                         {variant.stock === 0 ? (
-                            <span className="font-medium text-red-600">
-                                Habis
+                            <span className="font-semibold">
+                                Varian ini habis.
                             </span>
                         ) : variant.is_low_stock ? (
-                            <span className="font-medium text-amber-600">
-                                Sisa sedikit — tinggal {variant.stock}
+                            <span className="font-semibold text-warning">
+                                Sisa sedikit: tinggal {variant.stock}.
                             </span>
                         ) : (
-                            <span className="text-muted-foreground">
-                                Stok tersedia: {variant.stock}
+                            <span className="text-soft">
+                                Stok tersedia: {variant.stock}. Maksimal{' '}
+                                {maxPerItem} per pesanan.
                             </span>
                         )}
                     </p>
@@ -189,12 +217,12 @@ export default function ProductShow({
                                     value={quantity}
                                 />
 
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center rounded-md border">
+                                <div className="flex flex-wrap items-stretch gap-3">
+                                    <div className="flex items-center rounded-full bg-surface">
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="icon"
+                                            className="h-13 w-12"
                                             aria-label="Kurangi jumlah"
                                             disabled={quantity <= 1}
                                             onClick={() =>
@@ -206,15 +234,16 @@ export default function ProductShow({
                                             <Minus />
                                         </Button>
                                         <span
-                                            className="w-10 text-center"
+                                            className="w-10 text-center text-lead tabular-nums"
                                             aria-live="polite"
+                                            aria-label={`Jumlah ${quantity}`}
                                         >
                                             {quantity}
                                         </span>
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="icon"
+                                            className="h-13 w-12"
                                             aria-label="Tambah jumlah"
                                             disabled={quantity >= maxQuantity}
                                             onClick={() =>
@@ -229,6 +258,7 @@ export default function ProductShow({
 
                                     <Button
                                         type="submit"
+                                        size="xl"
                                         className="flex-1"
                                         disabled={
                                             processing || variant.stock === 0
@@ -251,24 +281,33 @@ export default function ProductShow({
                     </Form>
 
                     {product.description && (
-                        <div>
-                            <h2 className="mb-1 text-sm font-semibold">
-                                Deskripsi
+                        <section
+                            aria-labelledby="description-title"
+                            className="space-y-2"
+                        >
+                            <h2
+                                id="description-title"
+                                className="text-body font-semibold"
+                            >
+                                Tentang barang ini
                             </h2>
-                            <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                            <p className="max-w-[60ch] text-body whitespace-pre-line">
                                 {product.description}
                             </p>
-                        </div>
+                        </section>
                     )}
                 </div>
             </div>
 
             {related.length > 0 && (
-                <section className="mt-12">
-                    <h2 className="mb-4 text-lg font-semibold">
-                        Produk terkait
+                <section
+                    aria-labelledby="related-title"
+                    className="mt-24 space-y-6"
+                >
+                    <h2 id="related-title" className="text-head font-display">
+                        Barang serupa
                     </h2>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-4">
                         {related.map((item) => (
                             <ProductCard key={item.id} product={item} />
                         ))}

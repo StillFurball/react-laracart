@@ -12,7 +12,7 @@ test('customers cannot access the admin panel', function (string $route) {
     $this->actingAs(User::factory()->create())
         ->get(route($route))
         ->assertForbidden();
-})->with(['admin.orders.index', 'admin.products.index', 'admin.categories.index', 'admin.vouchers.index', 'admin.stock.index']);
+})->with(['admin.dashboard', 'admin.orders.index', 'admin.products.index', 'admin.categories.index', 'admin.vouchers.index', 'admin.stock.index']);
 
 test('customers cannot change an order status', function () {
     $order = Order::factory()->status(OrderStatus::Paid)->create();

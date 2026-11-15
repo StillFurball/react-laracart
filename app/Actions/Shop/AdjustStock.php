@@ -3,16 +3,20 @@
 namespace App\Actions\Shop;
 
 use App\Enums\StockMovementType;
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Notifications\LowStock;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 /**
- * The only place that changes variant stock; every change writes a ledger row.
+ * The only place that changes variant stock; every change writes a ledger row and
+ * a decrease that crosses the low-stock threshold emails the admins.
  */
 class AdjustStock
 {
@@ -51,6 +55,12 @@ class AdjustStock
 
             $variant->stock = $stockAfter;
             $variant->syncOriginalAttribute('stock');
+
+            $threshold = $variant->low_stock_threshold;
+
+            if ($quantity < 0 && $stockAfter <= $threshold && $stockAfter - $quantity > $threshold) {
+                DB::afterCommit(fn () => Notification::send(User::where('role', UserRole::Admin)->get(), new LowStock($variant)));
+            }
 
             return StockMovement::create([
                 'product_variant_id' => $variant->id,

@@ -1,9 +1,7 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { Info } from 'lucide-react';
 import { useState } from 'react';
 import CheckoutController from '@/actions/App/Http/Controllers/Shop/CheckoutController';
 import InputError from '@/components/input-error';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,9 +31,9 @@ function Section({
     action?: React.ReactNode;
 }) {
     return (
-        <section className="rounded-lg border p-4">
+        <section className="bg-surface p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-semibold">{title}</h2>
+                <h2 className="text-body font-semibold">{title}</h2>
                 {action}
             </div>
             {children}
@@ -92,22 +90,19 @@ export default function Checkout({
     return (
         <>
             <Head title="Checkout" />
-            <h1 className="mb-4 text-2xl font-semibold">Checkout</h1>
+            <h1 className="mb-10 text-head font-display">Checkout</h1>
 
             {priceChanges.length > 0 && (
-                <Alert className="mb-4">
-                    <Info />
-                    <AlertTitle>
+                <div role="status" className="mb-4 rounded-2xl bg-accent p-5">
+                    <h2 className="text-body font-semibold">
                         Harga berubah sejak ditambahkan ke keranjang
-                    </AlertTitle>
-                    <AlertDescription>
-                        <ul className="list-disc pl-4">
-                            {priceChanges.map((message) => (
-                                <li key={message}>{message}</li>
-                            ))}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
+                    </h2>
+                    <ul className="mt-1 list-disc pl-5 text-body">
+                        {priceChanges.map((message) => (
+                            <li key={message}>{message}</li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             <Form
@@ -115,8 +110,8 @@ export default function Checkout({
                 options={{ preserveScroll: true }}
             >
                 {({ processing, errors }) => (
-                    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-                        <div className="space-y-4">
+                    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+                        <div className="space-y-2">
                             <input
                                 type="hidden"
                                 name="idempotency_key"
@@ -143,16 +138,16 @@ export default function Checkout({
                                 action={
                                     <Link
                                         href={addressEdit()}
-                                        className="text-sm underline"
+                                        className="text-body underline"
                                     >
                                         Ubah
                                     </Link>
                                 }
                             >
-                                <p className="font-medium">
+                                <p className="text-body font-semibold">
                                     {address.recipient_name} · {address.phone}
                                 </p>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-body text-soft">
                                     {address.address_line}, {address.city},{' '}
                                     {address.province} {address.postal_code}
                                 </p>
@@ -160,7 +155,7 @@ export default function Checkout({
                             </Section>
 
                             <Section title={`Pengiriman — ${courier}`}>
-                                <p className="mb-2 text-xs text-muted-foreground">
+                                <p className="mb-3 text-small text-soft">
                                     Berat total{' '}
                                     {(weightGram / 1000).toLocaleString(
                                         'id-ID',
@@ -188,20 +183,20 @@ export default function Checkout({
                                                 })
                                             }
                                             className={cn(
-                                                'rounded-md border p-3 text-left',
+                                                'p-4 text-left transition-colors',
                                                 selection.shipping_service ===
                                                     service.key
-                                                    ? 'border-primary ring-2 ring-primary/30'
-                                                    : 'hover:bg-accent',
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-background hover:bg-accent',
                                             )}
                                         >
-                                            <p className="font-medium">
+                                            <p className="text-body font-semibold">
                                                 {service.name}
                                             </p>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-small">
                                                 Estimasi {service.eta}
                                             </p>
-                                            <p className="mt-1 text-sm font-semibold">
+                                            <p className="mt-2 text-lead font-semibold tabular-nums">
                                                 {formatRupiah(service.cost)}
                                             </p>
                                         </button>
@@ -215,20 +210,20 @@ export default function Checkout({
                                     {paymentMethods.map((method, index) => (
                                         <label
                                             key={method.value}
-                                            className="flex items-center gap-2 text-sm"
+                                            className="flex items-center gap-3 text-body"
                                         >
                                             <input
                                                 type="radio"
                                                 name="payment_method"
                                                 value={method.value}
                                                 defaultChecked={index === 0}
-                                                className="accent-primary"
+                                                className="size-4 accent-[var(--brand)]"
                                             />
                                             {method.label}
                                         </label>
                                     ))}
                                 </div>
-                                <p className="mt-2 text-xs text-muted-foreground">
+                                <p className="mt-3 text-small text-soft">
                                     Tidak ada pembayaran sungguhan. Data kartu
                                     tidak pernah diminta.
                                 </p>
@@ -249,7 +244,8 @@ export default function Checkout({
                                     />
                                     <Button
                                         type="button"
-                                        variant="outline"
+                                        variant="secondary"
+                                        className="h-10 bg-background hover:bg-accent"
                                         onClick={() =>
                                             preview({
                                                 voucher_code:
@@ -273,7 +269,7 @@ export default function Checkout({
                                     )}
                                 </div>
                                 {appliedVoucher && (
-                                    <p className="mt-2 text-sm text-emerald-600">
+                                    <p className="mt-3 text-body font-semibold text-warning">
                                         Voucher {appliedVoucher} dipakai: hemat{' '}
                                         {formatRupiah(totals.discount)}.
                                     </p>
@@ -296,9 +292,11 @@ export default function Checkout({
                             </Section>
                         </div>
 
-                        <aside className="h-fit space-y-3 rounded-lg border p-4 lg:sticky lg:top-24">
-                            <h2 className="font-semibold">Ringkasan</h2>
-                            <ul className="space-y-1 text-sm">
+                        <aside className="h-fit space-y-4 bg-surface p-6 lg:sticky lg:top-24">
+                            <h2 className="text-lead font-semibold">
+                                Ringkasan
+                            </h2>
+                            <ul className="space-y-1 text-body">
                                 {items.map((item) => (
                                     <li
                                         key={item.id}
@@ -315,13 +313,13 @@ export default function Checkout({
                                     </li>
                                 ))}
                             </ul>
-                            <dl className="space-y-1 border-t pt-3 text-sm">
+                            <dl className="space-y-1 bg-background p-4 text-body tabular-nums">
                                 <div className="flex justify-between">
                                     <dt>Subtotal</dt>
                                     <dd>{formatRupiah(totals.subtotal)}</dd>
                                 </div>
                                 {totals.discount > 0 && (
-                                    <div className="flex justify-between text-emerald-600">
+                                    <div className="flex justify-between text-warning">
                                         <dt>Diskon</dt>
                                         <dd>
                                             −{formatRupiah(totals.discount)}
@@ -334,18 +332,18 @@ export default function Checkout({
                                         {formatRupiah(totals.shipping_cost)}
                                     </dd>
                                 </div>
-                                <div className="flex justify-between border-t pt-2 text-base font-semibold">
+                                <div className="flex items-baseline justify-between pt-2 text-lead font-semibold">
                                     <dt>Total</dt>
                                     <dd>{formatRupiah(totals.grand_total)}</dd>
                                 </div>
                             </dl>
 
-                            <label className="flex items-start gap-2 text-sm">
+                            <label className="flex items-start gap-3 text-body">
                                 <input
                                     type="checkbox"
                                     name="terms"
                                     value="1"
-                                    className="mt-1 accent-primary"
+                                    className="mt-1 size-4 accent-[var(--brand)]"
                                 />
                                 <span>
                                     Saya memahami ini adalah toko demo dan
@@ -363,18 +361,19 @@ export default function Checkout({
 
                             <Button
                                 type="submit"
+                                size="xl"
                                 className="w-full"
                                 disabled={processing}
                             >
                                 {processing ? 'Memproses…' : 'Buat pesanan'}
                             </Button>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-small text-soft">
                                 Stok direservasi selama {paymentDueHours} jam
                                 menunggu pembayaran.
                             </p>
                             <Link
                                 href={cartIndex()}
-                                className="block text-center text-sm underline"
+                                className="block text-center text-body underline"
                             >
                                 Kembali ke keranjang
                             </Link>

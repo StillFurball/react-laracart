@@ -13,8 +13,8 @@ test('customers are redirected to the storefront', function () {
     $this->get(route('dashboard'))->assertRedirect(route('home'));
 });
 
-test('admins are redirected to the admin order list', function () {
+test('admins are redirected to the admin dashboard', function () {
     $this->actingAs(User::factory()->admin()->create());
 
-    $this->get(route('dashboard'))->assertRedirect(route('admin.orders.index'));
+    $this->get(route('dashboard'))->assertRedirect(route('admin.dashboard'));
 });

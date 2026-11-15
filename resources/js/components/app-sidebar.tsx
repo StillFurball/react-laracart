@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Boxes,
     FolderTree,
+    LayoutDashboard,
     MapPin,
     Package,
     ReceiptText,
@@ -23,7 +24,9 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard, home } from '@/routes';
+import { index as productsIndex } from '@/routes/products';
 import { edit as addressEdit } from '@/routes/address';
+import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as adminCategories } from '@/routes/admin/categories';
 import { index as adminOrders } from '@/routes/admin/orders';
 import { index as adminProducts } from '@/routes/admin/products';
@@ -34,6 +37,7 @@ import { index as ordersIndex } from '@/routes/orders';
 import type { NavItem } from '@/types';
 
 const adminNavItems: NavItem[] = [
+    { title: 'Dashboard', href: adminDashboard(), icon: LayoutDashboard },
     { title: 'Pesanan', href: adminOrders(), icon: ReceiptText },
     { title: 'Produk', href: adminProducts(), icon: Package },
     { title: 'Kategori', href: adminCategories(), icon: FolderTree },
@@ -42,7 +46,7 @@ const adminNavItems: NavItem[] = [
 ];
 
 const customerNavItems: NavItem[] = [
-    { title: 'Belanja', href: home(), icon: Store },
+    { title: 'Belanja', href: productsIndex(), icon: Store },
     { title: 'Keranjang', href: cartIndex(), icon: ShoppingCart },
     { title: 'Pesanan Saya', href: ordersIndex(), icon: ShoppingBag },
     { title: 'Alamat', href: addressEdit(), icon: MapPin },

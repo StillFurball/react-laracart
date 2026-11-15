@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Shop\ChangeOrderStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Shop\OrderController as ShopOrderController;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -92,7 +95,20 @@ class OrderController extends Controller
             ]);
         }
 
-        $changeOrderStatus->handle($order, $status, $request->user(), $validated['note'] ?? null, $validated['tracking_number'] ?? null);
+        DB::transaction(function () use ($changeOrderStatus, $order, $status, $request, $validated): void {
+            $changeOrderStatus->handle($order, $status, $request->user(), $validated['note'] ?? null, $validated['tracking_number'] ?? null);
+
+            if ($status === OrderStatus::Paid) {
+                $order->payments()->create([
+                    'gateway' => 'manual',
+                    'gateway_transaction_id' => 'MANUAL-'.Str::upper((string) Str::ulid()),
+                    'method' => $order->payment_method,
+                    'amount' => $order->grand_total,
+                    'status' => PaymentStatus::Paid,
+                    'paid_at' => now(),
+                ]);
+            }
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Status pesanan menjadi \"{$status->label()}\"."]);
 

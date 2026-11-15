@@ -54,21 +54,34 @@ enum OrderStatus: string
     }
 
     /**
-     * Transitions an admin may trigger manually (payment and expiry are system-only).
+     * Transitions an admin may trigger manually. Expiry is system-only; so is payment
+     * while the simulator is on, otherwise the admin confirms manual transfers.
      *
      * @return list<self>
      */
     public function adminTransitions(): array
     {
+        $systemOnly = config('shop.payment_simulator') ? [self::Paid, self::Expired] : [self::Expired];
+
         return array_values(array_filter(
             $this->allowedTransitions(),
-            fn (self $status): bool => ! in_array($status, [self::Paid, self::Expired], true),
+            fn (self $status): bool => ! in_array($status, $systemOnly, true),
         ));
     }
 
     public function releasesStock(): bool
     {
         return in_array($this, [self::Expired, self::Cancelled], true);
+    }
+
+    /**
+     * Statuses of orders that have been paid; these count as sales.
+     *
+     * @return list<self>
+     */
+    public static function paidStatuses(): array
+    {
+        return [self::Paid, self::Processing, self::Shipped, self::Delivered, self::Completed];
     }
 
     /**

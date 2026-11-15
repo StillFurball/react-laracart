@@ -12,10 +12,10 @@ import { email } from '@/routes/password';
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
         <>
-            <Head title="Forgot password" />
+            <Head title="Lupa kata sandi" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 bg-surface p-4 text-body font-medium text-success">
                     {status}
                 </div>
             )}
@@ -25,7 +25,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -47,16 +47,16 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     {processing && (
                                         <LoaderCircle className="h-4 w-4 animate-spin" />
                                     )}
-                                    Email password reset link
+                                    Kirim tautan atur ulang
                                 </Button>
                             </div>
                         </>
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
-                    <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                <div className="space-x-1 text-body">
+                    <span>Atau kembali ke halaman</span>
+                    <TextLink href={login()}>masuk</TextLink>
                 </div>
             </div>
         </>
@@ -64,6 +64,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 }
 
 ForgotPassword.layout = {
-    title: 'Forgot password',
-    description: 'Enter your email to receive a password reset link',
+    title: 'Lupa kata sandi',
+    description:
+        'Masukkan email akunmu; kami kirim tautan untuk mengatur ulang kata sandi.',
 };

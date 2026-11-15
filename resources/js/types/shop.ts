@@ -44,6 +44,8 @@ export type ProductCard = {
     min_price: number;
     total_stock: number;
     has_low_stock: boolean;
+    weight_gram: number;
+    colors: string[];
 };
 
 export type CategoryNode = {

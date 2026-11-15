@@ -9,9 +9,21 @@ enum PaymentMethod: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::BankTransfer => 'Transfer bank (simulasi)',
-            self::Qris => 'QRIS (simulasi)',
+        $label = match ($this) {
+            self::BankTransfer => 'Transfer bank',
+            self::Qris => 'QRIS',
         };
+
+        return config('shop.payment_simulator') ? "{$label} (simulasi)" : $label;
+    }
+
+    /**
+     * Methods offered at checkout; QRIS has no manual flow, so only the simulator offers it.
+     *
+     * @return list<self>
+     */
+    public static function available(): array
+    {
+        return config('shop.payment_simulator') ? self::cases() : [self::BankTransfer];
     }
 }
