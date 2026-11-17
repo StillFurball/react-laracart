@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -42,6 +44,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'store' => config('shop.store'),
+            'menuCategories' => Inertia::once(fn () => Category::whereNull('parent_id')->orderBy('name')->get(['name', 'slug'])),
             'cartCount' => fn (): int => (int) $request->user()?->cart?->items()->sum('quantity'),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

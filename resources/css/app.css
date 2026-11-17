@@ -88,8 +88,11 @@
  * links), 2% tangerine (discounts, promos, important info).
  * Tangerine #f97316 is only 2.8:1 on the ground, so text uses the darker --warning (5:1) and the
  * pure tone is kept for fills (--highlight). White on --primary 5.2:1; --soft 6.9:1 on --surface.
+ *
+ * The storefront follows a light-only design, so .theme-shop pins the light tokens even under .dark.
  */
-:root {
+:root,
+.theme-shop {
     --field: #eaf0f7;
     --surface: #eaf0f7;
     --deep: #dce5f0;
@@ -197,6 +200,11 @@
     /* In the base layer so any rounded-* utility still wins. */
     .theme-shop :where(a, button, input, select, textarea, img, .bg-primary) {
         border-radius: var(--radius-md);
+    }
+
+    /* Hanken Grotesk is the open release of HK Grotesk, the storefront design's typeface. */
+    .theme-shop {
+        font-family: 'Hanken Grotesk', var(--font-sans);
     }
 
     .theme-shop .bg-surface {

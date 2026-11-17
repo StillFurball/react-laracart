@@ -13,6 +13,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             store: StoreProfile;
+            menuCategories: { name: string; slug: string }[];
             cartCount: number;
             sidebarOpen: boolean;
             [key: string]: unknown;
