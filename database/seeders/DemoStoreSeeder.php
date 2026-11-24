@@ -8,14 +8,17 @@ use App\Enums\StockMovementType;
 use App\Enums\UserRole;
 use App\Enums\VoucherType;
 use App\Models\Category;
+use App\Models\FlashSale;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\User;
 use App\Models\Voucher;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 /**
- * Demo accounts, a three-level category tree, products with variants and vouchers.
+ * Demo accounts, a three-level category tree, products with variants, vouchers and flash sales.
  */
 class DemoStoreSeeder extends Seeder
 {
@@ -143,6 +146,46 @@ class DemoStoreSeeder extends Seeder
             'ends_at' => now()->subDay(),
             'is_active' => true,
         ]);
+
+        // A flash sale running now (quota and per-customer limits on most items) and one coming up.
+        $this->flashSale('Flash Sale Akhir Pekan', now()->startOfHour(), now()->addDays(3)->endOfDay(), [
+            ['Mouse Nirkabel Glide', 20, 25, 2],
+            ['Earbuds TWS Pico', 30, 15, 1],
+            ['Headphone Nirkabel Senyap ANC', 25, 10, 1],
+            ['Power Bank 20.000 mAh', 15, null, null],
+        ]);
+
+        $this->flashSale('Payday Sale', now()->addDays(4)->startOfDay(), now()->addDays(5)->endOfDay(), [
+            ['Laptop Kerja Orbit 15', 10, 5, 1],
+            ['Speaker Bluetooth Gema Mini', 20, 20, 2],
+            ['Jam Pintar Pulse 2', 15, null, 2],
+        ]);
+    }
+
+    /**
+     * @param  list<array{0: string, 1: int, 2: int|null, 3: int|null}>  $offers  product name, % off, quota, per-customer limit
+     */
+    private function flashSale(string $name, CarbonInterface $startsAt, CarbonInterface $endsAt, array $offers): void
+    {
+        $flashSale = FlashSale::create([
+            'name' => $name,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
+            'is_active' => true,
+        ]);
+
+        foreach ($offers as [$productName, $percentOff, $quota, $perUserLimit]) {
+            $variant = ProductVariant::whereHas('product', fn ($query) => $query->where('name', $productName))
+                ->orderBy('id')
+                ->firstOrFail();
+
+            $flashSale->items()->create([
+                'product_variant_id' => $variant->id,
+                'sale_price' => (int) round($variant->price * (100 - $percentOff) / 100, -3),
+                'quota' => $quota,
+                'per_user_limit' => $perUserLimit,
+            ]);
+        }
     }
 
     private function category(string $name, ?Category $parent = null): Category

@@ -5,12 +5,57 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\User;
 use App\Notifications\OrderStatusUpdated;
+use Illuminate\Support\Facades\Vite;
 
 test('responses carry the security headers', function () {
     $this->get(route('home'))
         ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
         ->assertHeader('X-Content-Type-Options', 'nosniff')
-        ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+        ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+});
+
+test('pages send a nonce based content security policy that the inline script follows', function () {
+    config(['shop.security.content_security_policy' => true]);
+
+    $response = $this->get(route('home'))->assertOk();
+    $nonce = Vite::cspNonce();
+
+    expect($nonce)->not->toBeEmpty();
+    expect($response->headers->get('Content-Security-Policy'))
+        ->toContain("script-src 'self' 'nonce-{$nonce}'")
+        ->toContain("object-src 'none'")
+        ->toContain("frame-ancestors 'self'");
+    $response->assertSee('<script nonce="'.$nonce.'">', false);
+});
+
+test('the content security policy can be switched off for the vite dev server', function () {
+    config(['shop.security.content_security_policy' => false]);
+
+    $this->get(route('home'))->assertHeaderMissing('Content-Security-Policy');
+});
+
+test('an unexpected appearance cookie value never reaches the page script', function () {
+    $this->withUnencryptedCookie('appearance', "dark';alert(1)//")
+        ->get(route('home'))
+        ->assertOk()
+        ->assertDontSee('alert(1)', false)
+        ->assertSee("const appearance = 'system';", false);
+});
+
+test('https requests forwarded by a trusted proxy get strict transport security', function () {
+    config(['trustedproxy.proxies' => '10.0.0.1']);
+
+    // Untrusted first: the test client builds later URLs from the previous request's scheme.
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->withHeader('X-Forwarded-Proto', 'https')
+        ->get(route('home'))
+        ->assertHeaderMissing('Strict-Transport-Security');
+
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.1'])
+        ->withHeader('X-Forwarded-Proto', 'https')
+        ->get(route('home'))
+        ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
 
 test('a customer cannot pay through the simulator once it is turned off', function () {

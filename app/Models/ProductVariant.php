@@ -56,6 +56,14 @@ class ProductVariant extends Model
     }
 
     /**
+     * @return HasMany<FlashSaleItem, $this>
+     */
+    public function flashSaleItems(): HasMany
+    {
+        return $this->hasMany(FlashSaleItem::class);
+    }
+
+    /**
      * Human readable variant name, e.g. "L / Hitam"; null for a default variant.
      */
     public function label(): ?string

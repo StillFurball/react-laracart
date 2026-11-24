@@ -85,12 +85,22 @@ enum OrderStatus: string
     }
 
     /**
-     * Statuses whose orders no longer consume voucher quota.
+     * Statuses whose orders no longer consume voucher or flash sale quota.
      *
      * @return list<self>
      */
     public static function voidStatuses(): array
     {
         return [self::Expired, self::Cancelled];
+    }
+
+    /**
+     * Statuses of orders that still need the customer: awaiting payment, on their way or under return.
+     *
+     * @return list<self>
+     */
+    public static function openStatuses(): array
+    {
+        return [self::PendingPayment, self::Paid, self::Processing, self::Shipped, self::Delivered, self::ReturnRequested];
     }
 }

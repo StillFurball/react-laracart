@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\Settings\DeleteAccount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
@@ -44,15 +45,15 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's profile.
+     * Delete the user's account (anonymised when it has past orders).
      */
-    public function destroy(ProfileDeleteRequest $request): RedirectResponse
+    public function destroy(ProfileDeleteRequest $request, DeleteAccount $deleteAccount): RedirectResponse
     {
         $user = $request->user();
 
         Auth::logout();
 
-        $user->delete();
+        $deleteAccount->handle($user);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

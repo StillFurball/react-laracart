@@ -41,10 +41,10 @@ class CheckoutController extends Controller
         $voucherCode = Str::limit(trim((string) $request->query('voucher_code')), 50, '');
 
         $totals = $summarizeCart->totals($user, $summary['subtotal'], $summary['weight_gram'], $service, $voucherCode);
-        $summarizeCart->acknowledgePriceChanges($cart);
+        $summarizeCart->acknowledgePriceChanges($summary['items']);
 
         return Inertia::render('shop/checkout', [
-            'items' => $summary['items']->map(fn ($item) => SummarizeCart::itemProps($item)),
+            'items' => $summary['items']->map(fn ($item) => SummarizeCart::itemProps($item, $summary['offers'][$item->id] ?? null)),
             'address' => $user->address->toSnapshot(),
             'services' => collect($services)->map(fn (array $config, string $key): array => [
                 'key' => $key,
@@ -82,9 +82,11 @@ class CheckoutController extends Controller
      */
     public function store(CheckoutRequest $request, PlaceOrder $placeOrder): RedirectResponse
     {
-        $order = $placeOrder->handle($request->user(), $request->validated());
+        $order = $placeOrder->handle($request->user(), $request->orderData());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Pesanan {$order->order_number} dibuat. Selesaikan pembayaran simulasi."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Pesanan {$order->order_number} dibuat. ".(config('shop.payment_simulator')
+            ? 'Selesaikan pembayaran simulasi.'
+            : 'Selesaikan pembayaran sebelum batas waktunya.')]);
 
         return to_route('orders.show', $order);
     }

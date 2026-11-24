@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Actions\Shop\ResolveFlashSalePrices;
 use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\ProductVariant;
@@ -14,16 +15,17 @@ use Inertia\Inertia;
 class CartItemController extends Controller
 {
     /**
-     * Add a variant to the cart, merging with an existing line.
+     * Add a variant to the cart, merging with an existing line. The price the customer just saw
+     * (flash sale price included) becomes the reference for later price-change notices.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ResolveFlashSalePrices $flashSalePrices): RedirectResponse
     {
         $validated = $request->validate([
             'product_variant_id' => ['required', 'integer', Rule::exists('product_variants', 'id')->whereNull('deleted_at')],
             'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $variant = ProductVariant::findOrFail($validated['product_variant_id']);
+        $variant = ProductVariant::findOrFail($request->integer('product_variant_id'));
 
         if (! $variant->isPurchasable()) {
             throw ValidationException::withMessages(['product_variant_id' => 'Produk tidak tersedia.']);
@@ -37,7 +39,7 @@ class CartItemController extends Controller
 
         $cart->items()->updateOrCreate(
             ['product_variant_id' => $variant->id],
-            ['quantity' => $quantity, 'price_at_add' => $item->price_at_add ?? $variant->price],
+            ['quantity' => $quantity, 'price_at_add' => $flashSalePrices->priceFor($variant, $quantity, $request->user()->id)['unit_price']],
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Produk ditambahkan ke keranjang.']);
@@ -46,9 +48,10 @@ class CartItemController extends Controller
     }
 
     /**
-     * Change the quantity of a cart line.
+     * Change the quantity of a cart line. A quantity can move the line in or out of a flash sale
+     * price; the cart explains that itself, so it is not announced as a price change.
      */
-    public function update(Request $request, CartItem $cartItem): RedirectResponse
+    public function update(Request $request, CartItem $cartItem, ResolveFlashSalePrices $flashSalePrices): RedirectResponse
     {
         $this->ensureOwnedBy($request, $cartItem);
 
@@ -56,9 +59,14 @@ class CartItemController extends Controller
             'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
-        $this->ensureQuantityAllowed($cartItem->variant, (int) $validated['quantity']);
+        $quantity = (int) $validated['quantity'];
 
-        $cartItem->update(['quantity' => (int) $validated['quantity']]);
+        $this->ensureQuantityAllowed($cartItem->variant, $quantity);
+
+        $cartItem->update([
+            'quantity' => $quantity,
+            'price_at_add' => $flashSalePrices->priceFor($cartItem->variant, $quantity, $request->user()->id)['unit_price'],
+        ]);
 
         return back();
     }

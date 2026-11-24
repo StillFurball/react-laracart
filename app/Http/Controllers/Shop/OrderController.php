@@ -108,7 +108,7 @@ class OrderController extends Controller
             'payment_due_at' => $order->payment_due_at->toIso8601String(),
             'customer_note' => $order->customer_note,
             'created_at' => $order->created_at->toIso8601String(),
-            'items' => $order->items->map->only(['id', 'product_name', 'variant_name', 'sku', 'unit_price', 'quantity', 'line_total']),
+            'items' => $order->items->map->only(['id', 'product_name', 'variant_name', 'sku', 'unit_price', 'regular_unit_price', 'quantity', 'line_total']),
             'payments' => $order->payments->map(fn (Payment $payment): array => [
                 'id' => $payment->id,
                 'reference' => $payment->gateway_transaction_id,
@@ -121,7 +121,7 @@ class OrderController extends Controller
                 'id' => $history->id,
                 'status_label' => $history->to_status->label(),
                 'note' => $history->note,
-                'actor' => $history->user?->name ?? 'Sistem',
+                'actor' => $history->user->name ?? 'Sistem',
                 'created_at' => $history->created_at->toIso8601String(),
             ]),
         ];

@@ -1,4 +1,4 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import CheckoutController from '@/actions/App/Http/Controllers/Shop/CheckoutController';
 import InputError from '@/components/input-error';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, formatRupiah } from '@/lib/utils';
+import { terms } from '@/routes';
 import { edit as addressEdit } from '@/routes/address';
 import { index as cartIndex } from '@/routes/cart';
 import { show as checkoutShow } from '@/routes/checkout';
@@ -71,6 +72,7 @@ export default function Checkout({
     paymentDueHours: number;
 }) {
     const [voucherInput, setVoucherInput] = useState(selection.voucher_code);
+    const { demoMode } = usePage().props;
 
     const preview = (changes: Partial<typeof selection>) => {
         const next = { ...selection, ...changes };
@@ -205,7 +207,13 @@ export default function Checkout({
                                 <InputError message={errors.shipping_service} />
                             </Section>
 
-                            <Section title="Metode pembayaran (simulasi)">
+                            <Section
+                                title={
+                                    demoMode
+                                        ? 'Metode pembayaran (simulasi)'
+                                        : 'Metode pembayaran'
+                                }
+                            >
                                 <div className="space-y-2">
                                     {paymentMethods.map((method, index) => (
                                         <label
@@ -224,8 +232,9 @@ export default function Checkout({
                                     ))}
                                 </div>
                                 <p className="mt-3 text-small text-soft">
-                                    Tidak ada pembayaran sungguhan. Data kartu
-                                    tidak pernah diminta.
+                                    {demoMode
+                                        ? 'Tidak ada pembayaran sungguhan. Data kartu tidak pernah diminta.'
+                                        : 'Nomor rekening tujuan tampil di halaman pesanan setelah pesanan dibuat. Kami tidak pernah meminta data kartu.'}
                                 </p>
                                 <InputError message={errors.payment_method} />
                             </Section>
@@ -302,10 +311,18 @@ export default function Checkout({
                                         key={item.id}
                                         className="flex justify-between gap-2"
                                     >
-                                        <span className="truncate">
-                                            {item.quantity}× {item.product_name}
-                                            {item.variant_label &&
-                                                ` (${item.variant_label})`}
+                                        <span className="min-w-0">
+                                            <span className="block truncate">
+                                                {item.quantity}×{' '}
+                                                {item.product_name}
+                                                {item.variant_label &&
+                                                    ` (${item.variant_label})`}
+                                            </span>
+                                            {item.flash_sale && (
+                                                <span className="text-small font-semibold text-[#007AB0]">
+                                                    Harga flash sale
+                                                </span>
+                                            )}
                                         </span>
                                         <span>
                                             {formatRupiah(item.line_total)}
@@ -346,8 +363,20 @@ export default function Checkout({
                                     className="mt-1 size-4 accent-[var(--brand)]"
                                 />
                                 <span>
-                                    Saya memahami ini adalah toko demo dan
-                                    menyetujui Syarat &amp; Ketentuan demo.
+                                    {demoMode &&
+                                        'Saya memahami ini adalah toko demo dan '}
+                                    {demoMode
+                                        ? 'menyetujui'
+                                        : 'Saya menyetujui'}{' '}
+                                    <a
+                                        href={terms.url()}
+                                        target="_blank"
+                                        rel="noopener"
+                                        className="underline"
+                                    >
+                                        Syarat &amp; Ketentuan
+                                    </a>
+                                    .
                                 </span>
                             </label>
                             <InputError message={errors.terms} />

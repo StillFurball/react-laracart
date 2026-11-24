@@ -5,14 +5,22 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CartItemController;
 use App\Http\Controllers\Shop\CatalogController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\FlashSaleController;
 use App\Http\Controllers\Shop\LandingController;
+use App\Http\Controllers\Shop\LegalController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\OrderPaymentController;
+use App\Http\Controllers\Shop\SeoController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', LandingController::class)->name('home');
 Route::get('products', [CatalogController::class, 'index'])->name('products.index');
 Route::get('products/{product:slug}', [CatalogController::class, 'show'])->name('products.show');
+Route::get('flash-sale', [FlashSaleController::class, 'index'])->name('flash-sale.index');
+Route::get('terms', [LegalController::class, 'terms'])->name('terms');
+Route::get('privacy', [LegalController::class, 'privacy'])->name('privacy');
+Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 Route::middleware('auth')->group(function () {
     Route::get('cart', [CartController::class, 'index'])->name('cart.index');

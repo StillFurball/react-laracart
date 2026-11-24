@@ -79,6 +79,27 @@ test('password can be updated', function () {
     expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
 });
 
+test('changing the password signs the account out of its other sessions', function () {
+    $user = User::factory()->create();
+    $passwordHashBeforeChange = $user->password;
+
+    $this->actingAs($user)
+        ->put(route('user-password.update'), [
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])
+        ->assertSessionHasNoErrors();
+
+    // Another device still carries a session created with the old password.
+    $this->actingAs($user->fresh())
+        ->withSession(['password_hash_web' => $passwordHashBeforeChange])
+        ->get(route('profile.edit'))
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
+});
+
 test('correct password must be provided to update password', function () {
     $user = User::factory()->create();
 

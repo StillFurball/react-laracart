@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\OrderStatus;
+use App\Models\Address;
+use App\Models\Order;
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -65,6 +68,44 @@ test('user can delete their account', function () {
 
     $this->assertGuest();
     expect($user->fresh())->toBeNull();
+});
+
+test('a customer with orders can delete their account: personal data is erased and the orders are kept', function () {
+    $order = Order::factory()->status(OrderStatus::Completed)->create();
+    $user = $order->user;
+    $user->update(['phone' => '081234567890']);
+    Address::factory()->for($user)->create();
+    $email = $user->email;
+
+    $this->actingAs($user)
+        ->delete(route('profile.destroy'), ['password' => 'password'])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('home'));
+
+    $this->assertGuest();
+
+    $user->refresh();
+    expect($user->name)->toBe('Akun dihapus');
+    expect($user->email)->not->toBe($email);
+    expect($user->phone)->toBeNull();
+    expect($user->address)->toBeNull();
+    expect($order->fresh()->user_id)->toBe($user->id);
+
+    $this->post(route('login.store'), ['email' => $email, 'password' => 'password']);
+    $this->assertGuest();
+});
+
+test('an account with an order still in progress cannot be deleted yet', function () {
+    $order = Order::factory()->status(OrderStatus::Paid)->create();
+
+    $this->actingAs($order->user)
+        ->from(route('profile.edit'))
+        ->delete(route('profile.destroy'), ['password' => 'password'])
+        ->assertSessionHasErrors(['account' => 'Selesaikan atau batalkan pesanan yang masih berjalan sebelum menghapus akun.'])
+        ->assertRedirect(route('profile.edit'));
+
+    $this->assertAuthenticated();
+    expect($order->user->fresh()->email)->toBe($order->user->email);
 });
 
 test('correct password must be provided to delete account', function () {

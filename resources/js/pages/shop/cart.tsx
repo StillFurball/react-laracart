@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Zap } from 'lucide-react';
 import CartItemController from '@/actions/App/Http/Controllers/Shop/CartItemController';
 import InputError from '@/components/input-error';
 import { ProductImage } from '@/components/product-card';
@@ -108,9 +108,38 @@ export default function Cart({
                                             {item.variant_label ?? 'Standar'} ·{' '}
                                             {item.sku}
                                         </p>
-                                        <p className="text-body tabular-nums">
-                                            {formatRupiah(item.price)}
+                                        <p className="flex flex-wrap items-baseline gap-x-2 text-body tabular-nums">
+                                            <span
+                                                className={
+                                                    item.flash_sale
+                                                        ? 'font-semibold text-[#007AB0]'
+                                                        : undefined
+                                                }
+                                            >
+                                                {formatRupiah(item.price)}
+                                            </span>
+                                            {item.flash_sale && (
+                                                <>
+                                                    <s className="text-small text-soft">
+                                                        {formatRupiah(
+                                                            item.regular_price,
+                                                        )}
+                                                    </s>
+                                                    <span className="inline-flex items-center gap-1 text-small font-semibold text-[#007AB0]">
+                                                        <Zap
+                                                            aria-hidden
+                                                            className="size-3.5 fill-current"
+                                                        />
+                                                        Flash sale
+                                                    </span>
+                                                </>
+                                            )}
                                         </p>
+                                        {item.sale_notice && (
+                                            <p className="text-small font-medium text-[#007AB0]">
+                                                {item.sale_notice}
+                                            </p>
+                                        )}
                                         {item.issue && (
                                             <p className="text-body font-semibold text-warning">
                                                 {item.issue}

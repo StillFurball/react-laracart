@@ -11,7 +11,8 @@ export default function AuthSimpleLayout({
     const { name } = usePage().props;
 
     return (
-        <div className="theme-shop flex min-h-svh flex-col items-center justify-center px-4 py-12">
+        // bg/text set here so the pinned light tokens of .theme-shop apply even when <body> is dark.
+        <div className="theme-shop flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12 text-foreground">
             <div className="w-full max-w-sm space-y-8">
                 <Link
                     href={home()}

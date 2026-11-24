@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureUserIsAdmin::class,
         ]);
 
+        // Sessions remember the password they were opened with, so a password change or reset
+        // signs out every other device.
+        $middleware->authenticateSessions();
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

@@ -26,7 +26,7 @@ class ProductImageController extends Controller
 
         foreach ($request->file('images') as $file) {
             $product->images()->create([
-                'path' => $file->store('products', 'public'),
+                'path' => $file->store('products', config('shop.media_disk')),
                 'sort_order' => ++$sortOrder,
             ]);
         }
@@ -38,7 +38,7 @@ class ProductImageController extends Controller
 
     public function destroy(ProductImage $productImage): RedirectResponse
     {
-        Storage::disk('public')->delete($productImage->path);
+        Storage::disk(config('shop.media_disk'))->delete($productImage->path);
         $productImage->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Gambar dihapus.']);

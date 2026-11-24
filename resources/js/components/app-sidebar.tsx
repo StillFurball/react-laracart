@@ -10,6 +10,7 @@ import {
     ShoppingCart,
     Store,
     TicketPercent,
+    Zap,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -28,6 +29,7 @@ import { index as productsIndex } from '@/routes/products';
 import { edit as addressEdit } from '@/routes/address';
 import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as adminCategories } from '@/routes/admin/categories';
+import { index as adminFlashSales } from '@/routes/admin/flash-sales';
 import { index as adminOrders } from '@/routes/admin/orders';
 import { index as adminProducts } from '@/routes/admin/products';
 import { index as adminStock } from '@/routes/admin/stock';
@@ -43,6 +45,7 @@ const adminNavItems: NavItem[] = [
     { title: 'Kategori', href: adminCategories(), icon: FolderTree },
     { title: 'Stok', href: adminStock(), icon: Boxes },
     { title: 'Voucher', href: adminVouchers(), icon: TicketPercent },
+    { title: 'Flash Sale', href: adminFlashSales(), icon: Zap },
 ];
 
 const customerNavItems: NavItem[] = [

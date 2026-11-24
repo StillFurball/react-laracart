@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FlashSaleController;
+use App\Http\Controllers\Admin\FlashSaleItemController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductImageController;
@@ -32,4 +34,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('stock', [StockController::class, 'index'])->name('stock.index');
 
     Route::resource('vouchers', VoucherController::class)->except('show');
+
+    Route::resource('flash-sales', FlashSaleController::class)->except('show');
+    Route::post('flash-sales/{flashSale}/items', [FlashSaleItemController::class, 'store'])->name('flash-sales.items.store');
+    Route::put('flash-sale-items/{flashSaleItem}', [FlashSaleItemController::class, 'update'])->name('flash-sale-items.update');
+    Route::delete('flash-sale-items/{flashSaleItem}', [FlashSaleItemController::class, 'destroy'])->name('flash-sale-items.destroy');
 });

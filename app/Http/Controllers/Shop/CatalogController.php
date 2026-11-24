@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Actions\Shop\ResolveFlashSalePrices;
 use App\Enums\OrderStatus;
 use App\Enums\ProductStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\FlashSaleItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Voucher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,21 +67,39 @@ class CatalogController extends Controller
                 ->get(),
             'filters' => [
                 'q' => $search ?? '',
-                'category' => $category?->slug ?? '',
+                'category' => $category->slug ?? '',
                 'sort' => $sort,
             ],
             'activeCategory' => $category?->only(['name', 'slug']),
+        ])->withViewData('seo', [
+            'title' => $category->name ?? 'Semua barang',
+            'description' => $category !== null
+                ? "Belanja {$category->name} di ".config('app.name').': '.$products->total().' barang, harga jelas, ongkir per kilo.'
+                : null,
+            // One canonical URL per listing; sort order and search terms only re-order or filter it.
+            'canonical' => route('products.index', array_filter(['category' => $category?->slug])),
+            'noindex' => filled($search),
         ]);
     }
 
     /**
-     * Product detail page with variant picker and related products.
+     * Product detail page with variant picker, flash sale offers and related products.
      */
-    public function show(Product $product): Response
+    public function show(Product $product, ResolveFlashSalePrices $flashSalePrices): Response
     {
         abort_unless($product->status === ProductStatus::Active, 404);
 
         $product->load(['category', 'images', 'variants' => fn ($query) => $query->orderBy('id')]);
+
+        $variantIds = $product->variants->pluck('id')->all();
+        $offers = $flashSalePrices->offersFor($variantIds);
+        $nextOffer = FlashSaleItem::query()
+            ->whereIn('product_variant_id', $variantIds)
+            ->whereHas('flashSale', fn (Builder $sales) => $sales->upcoming())
+            ->with('flashSale')
+            ->get()
+            ->sortBy(fn (FlashSaleItem $offer): int => $offer->flashSale->starts_at->getTimestamp())
+            ->first();
 
         $related = self::cardQuery()
             ->where('category_id', $product->category_id)
@@ -103,11 +126,77 @@ class CatalogController extends Controller
                     'compare_at_price' => $variant->compare_at_price,
                     'stock' => $variant->stock,
                     'is_low_stock' => $variant->isLowStock(),
+                    'flash_sale' => self::offer($offers->get($variant->id), $variant),
                 ]),
+                'upcoming_flash_sale' => $nextOffer === null ? null : [
+                    'name' => $nextOffer->flashSale->name,
+                    'starts_at' => $nextOffer->flashSale->starts_at->toIso8601String(),
+                    'price' => $nextOffer->sale_price,
+                ],
             ],
             'related' => $related,
             'maxPerItem' => (int) config('shop.max_quantity_per_item'),
-        ]);
+        ])->withViewData('seo', self::productSeo($product, $offers));
+    }
+
+    /**
+     * Share preview and schema.org Product data, with the prices a shopper pays right now.
+     *
+     * @param  Collection<int, FlashSaleItem>  $offers
+     * @return array<string, mixed>
+     */
+    private static function productSeo(Product $product, Collection $offers): array
+    {
+        $url = route('products.show', $product);
+        $prices = $product->variants->map(fn (ProductVariant $variant): int => $offers->get($variant->id)->sale_price ?? $variant->price);
+        $inStock = $product->variants->contains(fn (ProductVariant $variant): bool => $variant->stock > 0);
+        $description = Str::of($product->description ?? '')->stripTags()->squish()->limit(160)->toString();
+
+        return [
+            'title' => $product->name,
+            'description' => $description !== ''
+                ? $description
+                : "{$product->name} mulai ".Voucher::rupiah((int) $prices->min()).' di '.config('app.name').'.',
+            'canonical' => $url,
+            'type' => 'product',
+            'image' => $product->images->first()?->url,
+            'schema' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'Product',
+                'name' => $product->name,
+                'description' => $description !== '' ? $description : $product->name,
+                'sku' => $product->variants->first()?->sku,
+                'category' => $product->category->name,
+                'image' => $product->images->pluck('url')->all(),
+                'url' => $url,
+                'offers' => [
+                    '@type' => 'AggregateOffer',
+                    'priceCurrency' => 'IDR',
+                    'lowPrice' => (int) $prices->min(),
+                    'highPrice' => (int) $prices->max(),
+                    'offerCount' => $product->variants->count(),
+                    'availability' => $inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    'url' => $url,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{name: string, price: int, discount_percent: int, ends_at: string, quota: int|null, sold: int, remaining: int|null, per_user_limit: int|null}|null
+     */
+    private static function offer(?FlashSaleItem $offer, ProductVariant $variant): ?array
+    {
+        return $offer === null ? null : [
+            'name' => $offer->flashSale->name,
+            'price' => $offer->sale_price,
+            'discount_percent' => $offer->discountPercent($variant->price),
+            'ends_at' => $offer->flashSale->ends_at->toIso8601String(),
+            'quota' => $offer->quota,
+            'sold' => $offer->sold_count,
+            'remaining' => $offer->remainingQuota(),
+            'per_user_limit' => $offer->per_user_limit,
+        ];
     }
 
     /**
@@ -117,7 +206,14 @@ class CatalogController extends Controller
     {
         return Product::active()
             ->whereHas('variants')
-            ->with(['images', 'category', 'variants:id,product_id,attributes'])
+            ->with([
+                'images',
+                'category',
+                'variants:id,product_id,attributes,price',
+                'variants.flashSaleItems' => fn ($offers) => $offers
+                    ->whereHas('flashSale', fn (Builder $sales) => $sales->running())
+                    ->with('flashSale:id,ends_at'),
+            ])
             ->withMin('variants as min_price', 'price')
             ->withSum('variants as total_stock', 'stock')
             ->withExists(['variants as has_low_stock' => fn (Builder $query) => $query
@@ -126,21 +222,61 @@ class CatalogController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, slug: string, category: string, image: string|null, min_price: int, total_stock: int, has_low_stock: bool, weight_gram: int, colors: list<string>}
+     * @return array{id: int, name: string, slug: string, category: string, image: string|null, min_price: int, total_stock: int, has_low_stock: bool, weight_gram: int, colors: list<string>, flash_sale: array{price: int, regular_price: int, discount_percent: int, ends_at: string}|null}
      */
     public static function card(Product $product): array
     {
+        $colors = [];
+
+        foreach ($product->variants as $variant) {
+            $color = $variant->getAttribute('attributes')['Warna'] ?? null;
+
+            if (is_string($color) && $color !== '' && ! in_array($color, $colors, true)) {
+                $colors[] = $color;
+            }
+        }
+
         return [
             'id' => $product->id,
             'name' => $product->name,
             'slug' => $product->slug,
             'category' => $product->category->name,
             'image' => $product->images->first()?->url,
-            'min_price' => (int) $product->min_price,
-            'total_stock' => (int) $product->total_stock,
-            'has_low_stock' => (bool) $product->has_low_stock,
+            // Aggregates added by cardQuery() (withMin / withSum / withExists), not model attributes.
+            'min_price' => (int) $product->getAttribute('min_price'),
+            'total_stock' => (int) $product->getAttribute('total_stock'),
+            'has_low_stock' => (bool) $product->getAttribute('has_low_stock'),
             'weight_gram' => $product->weight_gram,
-            'colors' => $product->variants->pluck('attributes.Warna')->filter()->unique()->values()->all(),
+            'colors' => $colors,
+            'flash_sale' => self::bestOffer($product),
+        ];
+    }
+
+    /**
+     * The cheapest running flash sale offer among the product's variants (needs cardQuery's eager loads).
+     *
+     * @return array{price: int, regular_price: int, discount_percent: int, ends_at: string}|null
+     */
+    private static function bestOffer(Product $product): ?array
+    {
+        $best = $product->variants
+            ->flatMap(fn (ProductVariant $variant) => $variant->flashSaleItems
+                ->filter(fn (FlashSaleItem $offer): bool => $offer->sale_price < $variant->price)
+                ->map(fn (FlashSaleItem $offer): array => ['offer' => $offer, 'variant' => $variant]))
+            ->sortBy(fn (array $candidate): int => $candidate['offer']->sale_price)
+            ->first();
+
+        if ($best === null) {
+            return null;
+        }
+
+        ['offer' => $offer, 'variant' => $variant] = $best;
+
+        return [
+            'price' => $offer->sale_price,
+            'regular_price' => $variant->price,
+            'discount_percent' => $offer->discountPercent($variant->price),
+            'ends_at' => $offer->flashSale->ends_at->toIso8601String(),
         ];
     }
 }

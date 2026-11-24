@@ -1,6 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
-    BadgePercent,
     ChevronDown,
     LayoutDashboard,
     List,
@@ -13,11 +12,13 @@ import {
     ShoppingCart,
     Truck,
     UserRound,
+    Zap,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { dashboard, home, login } from '@/routes';
+import { dashboard, home, login, privacy, terms } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
+import { index as flashSaleIndex } from '@/routes/flash-sale';
 import { index as ordersIndex } from '@/routes/orders';
 import { index as productsIndex } from '@/routes/products';
 import { edit as profileEdit } from '@/routes/profile';
@@ -70,7 +71,7 @@ function SearchBox({ className }: { className?: string }) {
 }
 
 export default function ShopLayout({ children }: { children: ReactNode }) {
-    const { store, cartCount, menuCategories } = usePage().props;
+    const { store, cartCount, menuCategories, demoMode } = usePage().props;
     const user = usePage().props.auth.user as AuthUser | null;
     const activeCategory = new URLSearchParams(usePage().url.split('?')[1]).get(
         'category',
@@ -106,14 +107,14 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
                     </Link>
                     <span aria-hidden className="h-[18px] w-px bg-[#D9D9D9]" />
                     <Link
-                        href={productsIndex()}
+                        href={flashSaleIndex()}
                         className="flex items-center gap-1.5 hover:text-[#008ECC]"
                     >
-                        <BadgePercent
+                        <Zap
                             aria-hidden
                             className="size-[18px] text-[#008ECC]"
                         />
-                        Semua penawaran
+                        Flash sale
                     </Link>
                 </div>
             </div>
@@ -339,6 +340,14 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
                             </li>
                             <li>
                                 <Link
+                                    href={flashSaleIndex()}
+                                    className="hover:underline"
+                                >
+                                    Flash sale
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
                                     href={ordersIndex()}
                                     className="hover:underline"
                                 >
@@ -354,6 +363,22 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
                                 </Link>
                             </li>
                             <li>
+                                <Link
+                                    href={terms()}
+                                    className="hover:underline"
+                                >
+                                    Syarat &amp; Ketentuan
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href={privacy()}
+                                    className="hover:underline"
+                                >
+                                    Kebijakan Privasi
+                                </Link>
+                            </li>
+                            <li>
                                 <a
                                     href={`mailto:${store.email}`}
                                     className="hover:underline"
@@ -365,8 +390,8 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
                     </nav>
                 </div>
                 <p className="relative mx-auto max-w-[1200px] border-t border-white/30 px-4 py-7 text-center text-base md:text-xl md:leading-5">
-                    © {new Date().getFullYear()} {store.name}. Toko demo: tidak
-                    ada transaksi sungguhan.
+                    © {new Date().getFullYear()} {store.name}.
+                    {demoMode && ' Toko demo: tidak ada transaksi sungguhan.'}
                 </p>
             </footer>
         </div>

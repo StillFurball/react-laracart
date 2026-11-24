@@ -1,17 +1,30 @@
-import { Form, Head, Link } from '@inertiajs/react';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Form, Head, Link, router } from '@inertiajs/react';
+import { Minus, Plus, ShoppingCart, Zap } from 'lucide-react';
 import { useState } from 'react';
 import CartItemController from '@/actions/App/Http/Controllers/Shop/CartItemController';
+import { Countdown, QuotaMeter } from '@/components/flash-sale';
 import InputError from '@/components/input-error';
 import { colorFromLabel } from '@/components/product-art';
 import ProductCard, {
     formatWeight,
     ProductImage,
 } from '@/components/product-card';
+import ShareButton from '@/components/share-button';
 import { Button } from '@/components/ui/button';
-import { cn, formatRupiah } from '@/lib/utils';
+import { cn, formatDateTime, formatRupiah } from '@/lib/utils';
 import { index as productsIndex } from '@/routes/products';
 import type { ProductCard as ProductCardData } from '@/types';
+
+type VariantFlashSale = {
+    name: string;
+    price: number;
+    discount_percent: number;
+    ends_at: string;
+    quota: number | null;
+    sold: number;
+    remaining: number | null;
+    per_user_limit: number | null;
+};
 
 type Variant = {
     id: number;
@@ -21,6 +34,7 @@ type Variant = {
     compare_at_price: number | null;
     stock: number;
     is_low_stock: boolean;
+    flash_sale: VariantFlashSale | null;
 };
 
 type Product = {
@@ -32,7 +46,56 @@ type Product = {
     category: { name: string; slug: string };
     images: { id: number; url: string }[];
     variants: Variant[];
+    upcoming_flash_sale: {
+        name: string;
+        starts_at: string;
+        price: number;
+    } | null;
 };
+
+const reloadProduct = () => router.reload({ only: ['product'] });
+
+function FlashSalePanel({
+    offer,
+    variant,
+}: {
+    offer: VariantFlashSale;
+    variant: Variant;
+}) {
+    return (
+        <div className="space-y-3 rounded-2xl bg-[#F3F9FB] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <p className="flex items-center gap-2 font-bold text-[#007AB0]">
+                    <Zap aria-hidden className="size-5 fill-current" />
+                    {offer.name} · hemat {offer.discount_percent}%
+                </p>
+                <p className="flex items-center gap-2 text-sm font-medium text-[#666]">
+                    Berakhir dalam
+                    <Countdown
+                        target={offer.ends_at}
+                        label="Flash sale berakhir dalam"
+                        onElapsed={reloadProduct}
+                    />
+                </p>
+            </div>
+            {offer.quota !== null && (
+                <QuotaMeter
+                    quota={offer.quota}
+                    sold={offer.sold}
+                    remaining={offer.remaining}
+                    stock={variant.stock}
+                    saving={variant.price - offer.price}
+                />
+            )}
+            {offer.per_user_limit !== null && (
+                <p className="text-sm text-[#666]">
+                    Harga flash sale berlaku untuk maks. {offer.per_user_limit}{' '}
+                    barang per pelanggan.
+                </p>
+            )}
+        </div>
+    );
+}
 
 export default function ProductShow({
     product,
@@ -53,6 +116,7 @@ export default function ProductShow({
     const variant =
         product.variants.find((item) => item.id === variantId) ??
         firstAvailable;
+    const offer = variant.flash_sale;
     const maxQuantity = Math.min(variant.stock, maxPerItem);
     const hasOptions = product.variants.length > 1 || variant.label !== null;
 
@@ -130,13 +194,26 @@ export default function ProductShow({
                             {product.name}
                         </h1>
                         <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                            <span className="text-lead font-semibold tabular-nums">
-                                {formatRupiah(variant.price)}
+                            <span
+                                className={cn(
+                                    'text-lead font-semibold tabular-nums',
+                                    offer && 'text-[#007AB0]',
+                                )}
+                            >
+                                {formatRupiah(
+                                    offer ? offer.price : variant.price,
+                                )}
                             </span>
-                            {variant.compare_at_price && (
+                            {offer ? (
                                 <span className="text-body text-soft line-through">
-                                    {formatRupiah(variant.compare_at_price)}
+                                    {formatRupiah(variant.price)}
                                 </span>
+                            ) : (
+                                variant.compare_at_price && (
+                                    <span className="text-body text-soft line-through">
+                                        {formatRupiah(variant.compare_at_price)}
+                                    </span>
+                                )
                             )}
                             <span className="text-body text-soft">
                                 {formatWeight(product.weight_gram)} · SKU{' '}
@@ -144,6 +221,43 @@ export default function ProductShow({
                             </span>
                         </p>
                     </div>
+
+                    {offer ? (
+                        <FlashSalePanel offer={offer} variant={variant} />
+                    ) : (
+                        product.upcoming_flash_sale && (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-[#F3F9FB] p-4 text-sm text-[#222]">
+                                <Zap
+                                    aria-hidden
+                                    className="size-5 text-[#008ECC]"
+                                />
+                                <p>
+                                    <span className="font-semibold">
+                                        {product.upcoming_flash_sale.name}
+                                    </span>{' '}
+                                    mulai{' '}
+                                    {formatDateTime(
+                                        product.upcoming_flash_sale.starts_at,
+                                    )}
+                                    : harga mulai{' '}
+                                    <span className="font-semibold tabular-nums">
+                                        {formatRupiah(
+                                            product.upcoming_flash_sale.price,
+                                        )}
+                                    </span>
+                                    .
+                                </p>
+                                <Countdown
+                                    target={
+                                        product.upcoming_flash_sale.starts_at
+                                    }
+                                    label="Flash sale mulai dalam"
+                                    tone="brand"
+                                    onElapsed={reloadProduct}
+                                />
+                            </div>
+                        )
+                    )}
 
                     {hasOptions && (
                         <fieldset className="space-y-3">
@@ -279,6 +393,11 @@ export default function ProductShow({
                             </>
                         )}
                     </Form>
+
+                    <ShareButton
+                        title={product.name}
+                        text={`${product.name} — ${formatRupiah(offer ? offer.price : variant.price)}`}
+                    />
 
                     {product.description && (
                         <section

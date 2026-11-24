@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
-        <script>
+        <script nonce="{{ Vite::cspNonce() }}">
             (function() {
                 const appearance = '{{ $appearance ?? "system" }}';
 
@@ -30,6 +30,35 @@
             }
         </style>
 
+        {{--
+            Rendered on the server for link previews (WhatsApp, Facebook, X) and crawlers, which do not
+            run JavaScript. Controllers pass $seo through withViewData(); everything has a default.
+        --}}
+        @php
+            $seo ??= [];
+            $siteName = config('app.name');
+            $metaDescription = $seo['description'] ?? config('shop.seo.description');
+            $canonical = $seo['canonical'] ?? url()->current();
+        @endphp
+        <meta name="description" content="{{ $metaDescription }}" data-inertia="description">
+        @if (! config('shop.seo.indexable') || ($seo['noindex'] ?? false))
+            <meta name="robots" content="noindex, follow">
+        @endif
+        <link rel="canonical" href="{{ $canonical }}">
+        <meta property="og:site_name" content="{{ $siteName }}">
+        <meta property="og:locale" content="id_ID">
+        <meta property="og:type" content="{{ $seo['type'] ?? 'website' }}">
+        <meta property="og:title" content="{{ $seo['title'] ?? $siteName }}">
+        <meta property="og:description" content="{{ $metaDescription }}">
+        <meta property="og:url" content="{{ $canonical }}">
+        <meta property="og:image" content="{{ $seo['image'] ?? asset('images/og-default.png') }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="theme-color" content="#008ECC">
+        @isset($seo['schema'])
+            {{-- JSON_HEX_TAG turns "<" into <, so data can never close this script element. --}}
+            <script type="application/ld+json">@json($seo['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP)</script>
+        @endisset
+
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -41,7 +70,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ isset($seo['title']) ? $seo['title'].' - '.$siteName : $siteName }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

@@ -6,10 +6,23 @@ import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
-export default function VerifyEmail({ status }: { status?: string }) {
+export default function VerifyEmail({
+    status,
+    mailIsLogged,
+}: {
+    status?: string;
+    mailIsLogged: boolean;
+}) {
     return (
         <>
             <Head title="Verifikasi email" />
+
+            {mailIsLogged && (
+                <p className="mb-4 rounded-xl bg-surface p-3 text-small">
+                    Email belum dikirim sungguhan (MAIL_MAILER=log): tautannya
+                    ada di storage/logs/laravel.log.
+                </p>
+            )}
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 bg-surface p-4 text-body font-medium text-success">
@@ -41,6 +54,5 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
 VerifyEmail.layout = {
     title: 'Cek emailmu',
-    description:
-        'Klik tautan verifikasi yang baru kami kirim. Di demo ini email tercatat di storage/logs/laravel.log.',
+    description: 'Klik tautan verifikasi yang baru kami kirim ke emailmu.',
 };

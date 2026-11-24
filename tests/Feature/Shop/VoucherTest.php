@@ -75,6 +75,27 @@ test('the per-customer limit applies only to that customer', function () {
     expect($other->voucher_code)->toBe('SEKALI');
 });
 
+test('a customer who keeps guessing unknown voucher codes is blocked from trying more', function () {
+    Voucher::factory()->create(['code' => 'ASLI']);
+    addToCart($this->customer, ProductVariant::factory()->create(), 1);
+
+    foreach (range(1, 10) as $attempt) {
+        $this->actingAs($this->customer)
+            ->get(route('checkout.show', ['voucher_code' => "TEBAK{$attempt}"]))
+            ->assertInertia(fn ($page) => $page->where('voucherError', 'Kode voucher tidak ditemukan.'));
+    }
+
+    $this->actingAs($this->customer)
+        ->get(route('checkout.show', ['voucher_code' => 'ASLI']))
+        ->assertInertia(fn ($page) => $page
+            ->where('appliedVoucher', null)
+            ->where('voucherError', 'Terlalu banyak percobaan kode voucher. Coba lagi dalam beberapa menit.'));
+
+    $this->actingAs($this->customer)
+        ->post(route('checkout.store'), checkoutPayload($this->customer, ['voucher_code' => 'ASLI']))
+        ->assertSessionHasErrors(['voucher_code' => 'Terlalu banyak percobaan kode voucher. Coba lagi dalam beberapa menit.']);
+});
+
 test('an expired or inactive voucher is rejected', function (array $attributes) {
     Voucher::factory()->create(['code' => 'X1', ...$attributes]);
     addToCart($this->customer, ProductVariant::factory()->create(), 1);

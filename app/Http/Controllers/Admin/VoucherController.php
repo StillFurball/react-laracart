@@ -23,7 +23,7 @@ class VoucherController extends Controller
             ->through(fn (Voucher $voucher): array => [
                 ...self::formData($voucher),
                 'id' => $voucher->id,
-                'used_count' => $voucher->used_count,
+                'used_count' => (int) $voucher->getAttribute('used_count'),
             ]);
 
         return Inertia::render('admin/vouchers/index', [

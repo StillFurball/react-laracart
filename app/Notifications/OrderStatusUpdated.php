@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -41,7 +42,7 @@ class OrderStatusUpdated extends Notification implements ShouldQueue
         return ['mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(User $notifiable): MailMessage
     {
         $order = $this->order;
         $total = 'Rp'.number_format($order->grand_total, 0, ',', '.');

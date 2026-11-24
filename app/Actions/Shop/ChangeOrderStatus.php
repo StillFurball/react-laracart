@@ -5,6 +5,7 @@ namespace App\Actions\Shop;
 use App\Enums\OrderStatus;
 use App\Enums\StockMovementType;
 use App\Enums\UserRole;
+use App\Models\FlashSaleItem;
 use App\Models\Order;
 use App\Models\User;
 use App\Notifications\NewPaidOrder;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Applies a status transition with its side effects: history, shipment data, stock release and emails.
+ * Applies a status transition with its side effects: history, shipment data, stock and flash sale
+ * quota release, and emails.
  */
 class ChangeOrderStatus
 {
@@ -60,6 +62,13 @@ class ChangeOrderStatus
             if ($to->releasesStock()) {
                 foreach ($order->items()->with('variant')->get() as $item) {
                     $this->adjustStock->handle($item->variant, $item->quantity, StockMovementType::Release, $actor, $order);
+
+                    // The units go back to the flash sale quota, so another customer can still get the price.
+                    if ($item->flash_sale_item_id !== null) {
+                        FlashSaleItem::whereKey($item->flash_sale_item_id)
+                            ->where('sold_count', '>=', $item->quantity)
+                            ->decrement('sold_count', $item->quantity);
+                    }
                 }
             }
 

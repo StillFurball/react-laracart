@@ -58,7 +58,18 @@ export default function OrderDetail({
                                 <p className="text-xs text-muted-foreground">
                                     {item.variant_name ?? 'Standar'} ·{' '}
                                     {item.sku} · {item.quantity} ×{' '}
+                                    {item.regular_unit_price !== null && (
+                                        <>
+                                            <s>
+                                                {formatRupiah(
+                                                    item.regular_unit_price,
+                                                )}
+                                            </s>{' '}
+                                        </>
+                                    )}
                                     {formatRupiah(item.unit_price)}
+                                    {item.regular_unit_price !== null &&
+                                        ' · harga flash sale'}
                                 </p>
                             </div>
                             <span>{formatRupiah(item.line_total)}</span>

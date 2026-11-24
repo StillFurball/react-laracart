@@ -23,3 +23,11 @@ test('new users can register', function () {
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
 });
+
+test('registration attempts are rate limited per IP address', function () {
+    foreach (range(1, 3) as $attempt) {
+        $this->post(route('register.store'), ['name' => 'Bot'])->assertSessionHasErrors('email');
+    }
+
+    $this->post(route('register.store'), ['name' => 'Bot'])->assertTooManyRequests();
+});

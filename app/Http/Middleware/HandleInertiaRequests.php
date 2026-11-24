@@ -44,6 +44,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'store' => config('shop.store'),
+            // Demo mode = payment simulator on: copy that promises "no real money" only shows then.
+            'demoMode' => (bool) config('shop.payment_simulator'),
             'menuCategories' => Inertia::once(fn () => Category::whereNull('parent_id')->orderBy('name')->get(['name', 'slug'])),
             'cartCount' => fn (): int => (int) $request->user()?->cart?->items()->sum('quantity'),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

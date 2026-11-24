@@ -1,23 +1,24 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { Countdown, FlashSaleOfferCard } from '@/components/flash-sale';
 import ProductArt from '@/components/product-art';
 import { ProductImage } from '@/components/product-card';
 import { cn, formatRupiah } from '@/lib/utils';
+import { index as flashSaleIndex } from '@/routes/flash-sale';
 import { index as productsIndex, show } from '@/routes/products';
-import type { ProductCard as ProductCardData } from '@/types';
+import type { FlashSaleSummary, ProductCard as ProductCardData } from '@/types';
 
-type LandingProduct = ProductCardData & {
-    department: string;
-    compare_at_price: number | null;
-};
+type DealProduct = ProductCardData & { compare_at_price: number };
 
 type Department = {
     name: string;
     slug: string;
-    products: LandingProduct[];
-    minPrice: number;
+    min_price: number;
+    product_count: number;
+    lead_name: string;
+    image: string | null;
 };
 
 const description =
@@ -33,10 +34,20 @@ const brandStyles = [
     { card: 'bg-[#FFECDF] text-[#222]', chip: 'bg-[#FFD1B0]', rings: 'peach' },
 ];
 
-function discountPercent(product: LandingProduct): number {
-    return product.compare_at_price
-        ? Math.round((1 - product.min_price / product.compare_at_price) * 100)
-        : 0;
+function discountPercent(product: DealProduct): number {
+    return Math.round((1 - product.min_price / product.compare_at_price) * 100);
+}
+
+function SeeAllLink({ href }: { href: Parameters<typeof Link>[0]['href'] }) {
+    return (
+        <Link
+            href={href}
+            className="flex shrink-0 items-center gap-1.5 pb-4 text-base leading-[18px] font-medium text-[#222] hover:text-[#008ECC]"
+        >
+            Lihat semua
+            <ChevronRight aria-hidden className="size-[18px] text-[#008ECC]" />
+        </Link>
+    );
 }
 
 function SectionHeader({
@@ -56,17 +67,52 @@ function SectionHeader({
             >
                 {lead} <span className="text-[#008ECC]">{accent}</span>
             </h2>
-            <Link
-                href={productsIndex()}
-                className="flex shrink-0 items-center gap-1.5 pb-4 text-base leading-[18px] font-medium text-[#222] hover:text-[#008ECC]"
-            >
-                Lihat semua
-                <ChevronRight
-                    aria-hidden
-                    className="size-[18px] text-[#008ECC]"
-                />
-            </Link>
+            <SeeAllLink href={productsIndex()} />
         </div>
+    );
+}
+
+function FlashSaleStrip({ sale }: { sale: FlashSaleSummary }) {
+    const running = sale.status === 'running';
+
+    return (
+        <section aria-labelledby="flash-sale-title" className="mt-16 md:mt-20">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-4 border-b border-[#EDEDED]">
+                <div className="-mb-px flex flex-wrap items-center gap-x-4 gap-y-2 border-b-[3px] border-[#008ECC] pb-4">
+                    <h2
+                        id="flash-sale-title"
+                        className="flex items-center gap-2 text-xl leading-[30px] font-bold text-[#666] md:text-2xl"
+                    >
+                        <Zap
+                            aria-hidden
+                            className="size-6 fill-[#008ECC] text-[#008ECC]"
+                        />
+                        Flash <span className="text-[#008ECC]">Sale</span>
+                    </h2>
+                    <span className="text-sm font-medium text-[#666]">
+                        {running
+                            ? 'Berakhir dalam'
+                            : `${sale.name} mulai dalam`}
+                    </span>
+                    <Countdown
+                        target={running ? sale.ends_at : sale.starts_at}
+                        label={running ? 'Berakhir dalam' : 'Mulai dalam'}
+                        tone={running ? 'dark' : 'brand'}
+                        onElapsed={() => router.reload({ only: ['flashSale'] })}
+                    />
+                </div>
+                <SeeAllLink href={flashSaleIndex()} />
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {sale.items.slice(0, 5).map((offer) => (
+                    <FlashSaleOfferCard
+                        key={offer.id}
+                        offer={offer}
+                        upcoming={!running}
+                    />
+                ))}
+            </div>
+        </section>
     );
 }
 
@@ -115,7 +161,7 @@ function HeroSlider({ departments }: { departments: Department[] }) {
                             {slide.name}.
                         </p>
                         <p className="mt-3 text-base leading-tight font-semibold md:mt-5 md:text-[30px] md:leading-[30px]">
-                            Mulai {formatRupiah(slide.minPrice)}
+                            Mulai {formatRupiah(slide.min_price)}
                         </p>
                     </div>
                     {/* The design's photo is a watch; other departments get their device glyph. */}
@@ -180,7 +226,7 @@ function HeroSlider({ departments }: { departments: Department[] }) {
     );
 }
 
-function DealCard({ product }: { product: LandingProduct }) {
+function DealCard({ product }: { product: DealProduct }) {
     const percent = discountPercent(product);
 
     return (
@@ -210,58 +256,38 @@ function DealCard({ product }: { product: LandingProduct }) {
                     <span className="font-bold">
                         {formatRupiah(product.min_price)}
                     </span>
-                    {product.compare_at_price && (
-                        <s>{formatRupiah(product.compare_at_price)}</s>
-                    )}
+                    <s>{formatRupiah(product.compare_at_price)}</s>
                 </p>
                 <p className="mt-2.5 border-t border-[#EDEDED] pt-2.5 text-base leading-[18px] font-semibold">
-                    {product.compare_at_price ? (
-                        <span className="text-[#249B3E] tabular-nums">
-                            Hemat -{' '}
-                            {formatRupiah(
-                                product.compare_at_price - product.min_price,
-                            )}
-                        </span>
-                    ) : (
-                        <span className="text-[#666]">{product.category}</span>
-                    )}
+                    <span className="text-[#249B3E] tabular-nums">
+                        Hemat -{' '}
+                        {formatRupiah(
+                            product.compare_at_price - product.min_price,
+                        )}
+                    </span>
                 </p>
             </div>
         </Link>
     );
 }
 
-export default function Landing({ products }: { products: LandingProduct[] }) {
-    const { menuCategories } = usePage().props;
-
-    const departments: Department[] = menuCategories
-        .map((category) => {
-            const items = products.filter(
-                (product) => product.department === category.name,
-            );
-
-            return {
-                ...category,
-                products: items,
-                minPrice: Math.min(
-                    ...items.map((product) => product.min_price),
-                ),
-            };
-        })
-        .filter((department) => department.products.length > 0);
+export default function Landing({
+    flashSale,
+    departments,
+    deals,
+    essentials,
+}: {
+    flashSale: FlashSaleSummary | null;
+    departments: Department[];
+    deals: DealProduct[];
+    essentials: ProductCardData[];
+}) {
     // The design opens on its watch photo, so that slide leads.
     const slides = [...departments].sort(
         (a, b) =>
             Number(/\b(jam|watch)\b/i.test(b.name)) -
             Number(/\b(jam|watch)\b/i.test(a.name)),
     );
-
-    const deals = [...products]
-        .sort((a, b) => discountPercent(b) - discountPercent(a))
-        .slice(0, 5);
-    const essentials = products
-        .filter((product) => !deals.includes(product))
-        .slice(0, 6);
 
     return (
         <>
@@ -278,6 +304,8 @@ export default function Landing({ products }: { products: LandingProduct[] }) {
             </h1>
 
             {slides.length > 0 && <HeroSlider departments={slides} />}
+
+            {flashSale && <FlashSaleStrip sale={flashSale} />}
 
             {deals.length > 0 && (
                 <Section id="deals-title">
@@ -320,11 +348,7 @@ export default function Landing({ products }: { products: LandingProduct[] }) {
                                         )}
                                     >
                                         <ProductImage
-                                            src={
-                                                department.products.find(
-                                                    (product) => product.image,
-                                                )?.image ?? null
-                                            }
+                                            src={department.image}
                                             alt={department.name}
                                             className="aspect-square w-3/4 rounded-none bg-transparent object-contain"
                                         />
@@ -349,7 +373,6 @@ export default function Landing({ products }: { products: LandingProduct[] }) {
                     <div className="grid gap-4 md:grid-cols-3">
                         {departments.slice(0, 3).map((department, index) => {
                             const style = brandStyles[index];
-                            const lead = department.products[0];
 
                             return (
                                 <Link
@@ -384,12 +407,12 @@ export default function Landing({ products }: { products: LandingProduct[] }) {
                                         />
                                         <p className="mt-auto text-2xl leading-[30px] font-semibold">
                                             Mulai{' '}
-                                            {formatRupiah(department.minPrice)}
+                                            {formatRupiah(department.min_price)}
                                         </p>
                                     </div>
                                     <ProductImage
-                                        src={lead.image}
-                                        alt={lead.name}
+                                        src={department.image}
+                                        alt={department.lead_name}
                                         className={cn(
                                             'absolute top-3 right-6 h-[185px] w-[140px] rounded-none bg-transparent object-contain',
                                             index === 0

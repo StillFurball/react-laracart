@@ -32,6 +32,51 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Security
+    |--------------------------------------------------------------------------
+    |
+    | The Content-Security-Policy header (scripts need this origin or the
+    | per-request nonce) is on by default in production. Keep it off while
+    | the Vite dev server is running.
+    |
+    */
+
+    'security' => [
+        'content_security_policy' => (bool) env('SHOP_CSP', env('APP_ENV', 'production') === 'production'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Search Engines & Sharing
+    |--------------------------------------------------------------------------
+    |
+    | "indexable" lets search engines index the store (robots.txt, meta
+    | robots). It is off outside production so staging copies stay out of
+    | search results. The description is used when a page has none.
+    |
+    */
+
+    'seo' => [
+        'indexable' => (bool) env('SHOP_INDEXABLE', env('APP_ENV', 'production') === 'production'),
+        'description' => env('SHOP_DESCRIPTION', 'Ponsel, laptop, audio dan aksesori dengan harga yang jelas. Ongkir dihitung per kilo.'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Media
+    |--------------------------------------------------------------------------
+    |
+    | Disk for product and category photos. "public" keeps them on the server
+    | (run `php artisan storage:link`). Hosts that wipe the disk on every
+    | deploy (Laravel Cloud, Railway, Render, Fly) need object storage such
+    | as "s3", which requires league/flysystem-aws-s3-v3.
+    |
+    */
+
+    'media_disk' => env('SHOP_MEDIA_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Operational Settings
     |--------------------------------------------------------------------------
     */

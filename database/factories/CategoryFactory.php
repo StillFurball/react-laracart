@@ -18,7 +18,7 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = Str::title(fake()->unique()->words(2, true));
+        $name = Str::title(rtrim(fake()->unique()->sentence(2, false), '.'));
 
         return [
             'parent_id' => null,

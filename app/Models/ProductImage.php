@@ -33,6 +33,6 @@ class ProductImage extends Model
      */
     protected function url(): Attribute
     {
-        return Attribute::get(fn (): string => Storage::disk('public')->url($this->path));
+        return Attribute::get(fn (): string => Storage::disk(config('shop.media_disk'))->url($this->path));
     }
 }

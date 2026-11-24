@@ -21,7 +21,7 @@ class ProductFactory extends Factory
      */
     public function definition(): array
     {
-        $name = Str::title(fake()->unique()->words(3, true));
+        $name = Str::title(rtrim(fake()->unique()->sentence(3, false), '.'));
 
         return [
             'category_id' => Category::factory(),

@@ -23,7 +23,7 @@ class CategoryController extends Controller
                 'slug' => $counts[$option['id']]->slug,
                 'products_count' => $counts[$option['id']]->products_count,
                 'children_count' => $counts[$option['id']]->children_count,
-                'image' => $counts[$option['id']]->image_path ? Storage::disk('public')->url($counts[$option['id']]->image_path) : null,
+                'image' => $counts[$option['id']]->image_path ? Storage::disk(config('shop.media_disk'))->url($counts[$option['id']]->image_path) : null,
             ]),
             'parentOptions' => self::parentOptions(),
         ]);
@@ -33,7 +33,7 @@ class CategoryController extends Controller
     {
         Category::create([
             ...$request->safe()->only(['name', 'slug', 'parent_id']),
-            'image_path' => $request->file('image')?->store('categories', 'public'),
+            'image_path' => $request->file('image')?->store('categories', config('shop.media_disk')),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Kategori dibuat.']);
@@ -48,7 +48,7 @@ class CategoryController extends Controller
         return Inertia::render('admin/categories/edit', [
             'category' => [
                 ...$category->only(['id', 'name', 'slug', 'parent_id']),
-                'image' => $category->image_path ? Storage::disk('public')->url($category->image_path) : null,
+                'image' => $category->image_path ? Storage::disk(config('shop.media_disk'))->url($category->image_path) : null,
             ],
             'parentOptions' => array_values(array_filter(
                 self::parentOptions(),
@@ -63,10 +63,10 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             if ($category->image_path) {
-                Storage::disk('public')->delete($category->image_path);
+                Storage::disk(config('shop.media_disk'))->delete($category->image_path);
             }
 
-            $data['image_path'] = $request->file('image')->store('categories', 'public');
+            $data['image_path'] = $request->file('image')->store('categories', config('shop.media_disk'));
         }
 
         $category->update($data);
@@ -86,7 +86,7 @@ class CategoryController extends Controller
         }
 
         if ($category->image_path) {
-            Storage::disk('public')->delete($category->image_path);
+            Storage::disk(config('shop.media_disk'))->delete($category->image_path);
         }
 
         $category->delete();

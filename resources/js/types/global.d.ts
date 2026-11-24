@@ -13,6 +13,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             store: StoreProfile;
+            /** Payment simulator on: no real money changes hands. */
+            demoMode: boolean;
             menuCategories: { name: string; slug: string }[];
             cartCount: number;
             sidebarOpen: boolean;

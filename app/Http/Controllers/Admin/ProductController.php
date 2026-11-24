@@ -53,8 +53,8 @@ class ProductController extends Controller
                 'category' => $product->category->name,
                 'status' => $product->status->value,
                 'variants_count' => $product->variants_count,
-                'total_stock' => (int) $product->total_stock,
-                'min_price' => (int) $product->min_price,
+                'total_stock' => (int) $product->getAttribute('total_stock'),
+                'min_price' => (int) $product->getAttribute('min_price'),
             ]);
 
         return Inertia::render('admin/products/index', [
@@ -152,7 +152,7 @@ class ProductController extends Controller
     {
         $categories = Category::get(['id', 'parent_id', 'name'])->keyBy('id');
 
-        return $categories
+        return array_values($categories
             ->map(function (Category $category) use ($categories): array {
                 $path = [$category->name];
                 $parent = $categories->get($category->parent_id);
@@ -165,7 +165,6 @@ class ProductController extends Controller
                 return ['id' => $category->id, 'name' => implode(' › ', $path)];
             })
             ->sortBy('name')
-            ->values()
-            ->all();
+            ->all());
     }
 }

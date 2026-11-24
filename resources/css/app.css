@@ -212,6 +212,38 @@
     }
 }
 
+/*
+ * Flash sale quota bar on a native <progress> (keeps its implicit progressbar role).
+ * appearance: none is required for custom styling, and the WebKit and Firefox fill
+ * pseudo-elements must stay in separate rules: grouping them invalidates the rule.
+ */
+@layer components {
+    .quota-progress {
+        appearance: none;
+        border: 0 solid;
+        overflow: clip;
+        inline-size: 100%;
+        block-size: 0.5rem;
+        border-radius: 1e5px;
+        background: #e6f4fa;
+    }
+
+    .quota-progress::-webkit-progress-bar {
+        background: transparent;
+    }
+
+    .quota-progress::-webkit-progress-value {
+        background: #008ecc;
+        border-radius: 1e5px;
+        transition: inline-size 0.3s;
+    }
+
+    .quota-progress::-moz-progress-bar {
+        background: #008ecc;
+        border-radius: 1e5px;
+    }
+}
+
 @utility font-display {
     font-weight: 600;
     letter-spacing: -0.022em;

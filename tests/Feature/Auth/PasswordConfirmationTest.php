@@ -20,3 +20,17 @@ test('password confirmation requires authentication', function () {
 
     $response->assertRedirect(route('login'));
 });
+
+test('password confirmation attempts are rate limited per user', function () {
+    $user = User::factory()->create();
+
+    foreach (range(1, 5) as $attempt) {
+        $this->actingAs($user)
+            ->post(route('password.confirm.store'), ['password' => 'wrong-password'])
+            ->assertSessionHasErrors('password');
+    }
+
+    $this->actingAs($user)
+        ->post(route('password.confirm.store'), ['password' => 'password'])
+        ->assertTooManyRequests();
+});

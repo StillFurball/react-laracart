@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { Zap } from 'lucide-react';
 import ProductArt from '@/components/product-art';
 import { cn, formatRupiah } from '@/lib/utils';
 import { show } from '@/routes/products';
@@ -44,6 +45,9 @@ export function formatWeight(grams: number): string {
 export default function ProductCard({ product }: { product: ProductCardData }) {
     const soldOut = product.total_stock === 0;
     const colors = product.colors.length;
+    const offer = product.flash_sale;
+    // The offer leads only when it is the cheapest way to buy the product.
+    const offerLeads = offer !== null && offer.price < product.min_price;
 
     return (
         <Link
@@ -51,14 +55,22 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             prefetch
             className="group flex flex-col gap-3"
         >
-            <ProductImage
-                src={product.image}
-                alt={product.name}
-                className={cn(
-                    'aspect-square transition-opacity group-hover:opacity-80',
-                    soldOut && 'opacity-50',
+            <div className="relative">
+                <ProductImage
+                    src={product.image}
+                    alt={product.name}
+                    className={cn(
+                        'aspect-square transition-opacity group-hover:opacity-80',
+                        soldOut && 'opacity-50',
+                    )}
+                />
+                {offer && (
+                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-[#008ECC] px-2.5 py-1 text-xs font-semibold text-white">
+                        <Zap aria-hidden className="size-3.5 fill-current" />
+                        Flash sale −{offer.discount_percent}%
+                    </span>
                 )}
-            />
+            </div>
             <div className="flex flex-1 flex-col gap-0.5 px-1">
                 <p className="text-small text-soft">
                     {product.category}
@@ -68,9 +80,21 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                     {product.name}
                 </h3>
                 <p className="flex flex-wrap items-baseline gap-x-2 text-body">
-                    <span className="tabular-nums">
-                        {formatRupiah(product.min_price)}
+                    <span
+                        className={cn(
+                            'tabular-nums',
+                            offerLeads && 'font-semibold text-[#007AB0]',
+                        )}
+                    >
+                        {formatRupiah(
+                            offerLeads ? offer.price : product.min_price,
+                        )}
                     </span>
+                    {offerLeads && (
+                        <s className="text-small text-soft tabular-nums">
+                            {formatRupiah(offer.regular_price)}
+                        </s>
+                    )}
                     {soldOut ? (
                         <span className="text-small text-soft">Habis</span>
                     ) : (

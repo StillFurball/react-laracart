@@ -15,12 +15,11 @@ class CartController extends Controller
      */
     public function index(Request $request, SummarizeCart $summarizeCart): Response
     {
-        $cart = $request->user()->cart;
-        $summary = $summarizeCart->handle($cart);
-        $summarizeCart->acknowledgePriceChanges($cart);
+        $summary = $summarizeCart->handle($request->user()->cart);
+        $summarizeCart->acknowledgePriceChanges($summary['items']);
 
         return Inertia::render('shop/cart', [
-            'items' => $summary['items']->map(fn ($item) => SummarizeCart::itemProps($item)),
+            'items' => $summary['items']->map(fn ($item) => SummarizeCart::itemProps($item, $summary['offers'][$item->id] ?? null)),
             'subtotal' => $summary['subtotal'],
             'issues' => $summary['issues'],
             'priceChanges' => $summary['price_changes'],

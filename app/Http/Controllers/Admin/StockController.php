@@ -51,7 +51,7 @@ class StockController extends Controller
                 'quantity' => $movement->quantity,
                 'stock_after' => $movement->stock_after,
                 'order_number' => $movement->order?->order_number,
-                'user' => $movement->user?->name ?? 'Sistem',
+                'user' => $movement->user->name ?? 'Sistem',
                 'note' => $movement->note,
                 'created_at' => $movement->created_at->toIso8601String(),
             ]);

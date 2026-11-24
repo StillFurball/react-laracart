@@ -25,6 +25,14 @@ test('reset password link can be requested', function () {
     Notification::assertSentTo($user, ResetPassword::class);
 });
 
+test('reset link requests are rate limited per IP address', function () {
+    foreach (range(1, 5) as $attempt) {
+        $this->post(route('password.email'), ['email' => "user{$attempt}@example.com"]);
+    }
+
+    $this->post(route('password.email'), ['email' => 'user6@example.com'])->assertTooManyRequests();
+});
+
 test('reset password screen can be rendered', function () {
     Notification::fake();
 

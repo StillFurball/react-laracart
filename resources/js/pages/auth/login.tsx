@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -17,9 +17,18 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
+    const { demoMode } = usePage().props;
+
     return (
         <>
             <Head title="Masuk" />
+
+            {demoMode && (
+                <p className="rounded-xl bg-surface p-3 text-small">
+                    Akun demo: <strong>pelanggan@myshop.test</strong> dengan
+                    kata sandi <strong>password</strong>.
+                </p>
+            )}
 
             <Form
                 {...store.form()}
@@ -111,6 +120,5 @@ export default function Login({ status, canResetPassword }: Props) {
 
 Login.layout = {
     title: 'Masuk',
-    description:
-        'Masuk untuk melihat keranjang dan pesananmu. Akun demo: pelanggan@myshop.test.',
+    description: 'Masuk untuk melihat keranjang dan pesananmu.',
 };

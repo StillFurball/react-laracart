@@ -96,7 +96,7 @@ class Category extends Model
         $level = [$this->id];
 
         for ($i = 1; $i < self::MAX_DEPTH && $level !== []; $i++) {
-            $level = Category::whereIn('parent_id', $level)->pluck('id')->all();
+            $level = array_values(array_map(intval(...), Category::whereIn('parent_id', $level)->pluck('id')->all()));
             $ids = [...$ids, ...$level];
         }
 
